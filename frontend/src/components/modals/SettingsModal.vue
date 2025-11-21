@@ -215,18 +215,27 @@ async function cleanupDatabase() {
             <div class="flex-1 overflow-y-auto p-6">
                 <div v-if="activeTab === 'general'" class="space-y-6">
                     <div class="setting-group">
-                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider">{{ store.i18n.t('appearance') }}</label>
+                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+                            <i class="ph ph-palette text-base"></i>
+                            {{ store.i18n.t('appearance') }}
+                        </label>
                         <div class="setting-item">
-                            <div class="flex-1">
-                                <div class="font-medium mb-1">{{ store.i18n.t('darkMode') }}</div>
-                                <div class="text-xs text-text-secondary">{{ store.i18n.t('darkModeDesc') }}</div>
+                            <div class="flex-1 flex items-start gap-3">
+                                <i class="ph ph-moon text-xl text-text-secondary mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">{{ store.i18n.t('darkMode') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('darkModeDesc') }}</div>
+                                </div>
                             </div>
                             <input type="checkbox" :checked="store.theme === 'dark'" @change="store.toggleTheme()" class="toggle">
                         </div>
                         <div class="setting-item mt-3">
-                            <div class="flex-1">
-                                <div class="font-medium mb-1">{{ store.i18n.t('language') }}</div>
-                                <div class="text-xs text-text-secondary">{{ store.i18n.t('languageDesc') }}</div>
+                            <div class="flex-1 flex items-start gap-3">
+                                <i class="ph ph-translate text-xl text-text-secondary mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">{{ store.i18n.t('language') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('languageDesc') }}</div>
+                                </div>
                             </div>
                             <select v-model="settings.language" class="input-field w-32">
                                 <option value="en">{{ store.i18n.t('english') }}</option>
@@ -236,33 +245,51 @@ async function cleanupDatabase() {
                     </div>
 
                     <div class="setting-group">
-                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider">{{ store.i18n.t('updates') }}</label>
+                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+                            <i class="ph ph-arrow-clockwise text-base"></i>
+                            {{ store.i18n.t('updates') }}
+                        </label>
                         <div class="setting-item">
-                            <div class="flex-1">
-                                <div class="font-medium mb-1">{{ store.i18n.t('autoUpdateInterval') }}</div>
-                                <div class="text-xs text-text-secondary">{{ store.i18n.t('autoUpdateIntervalDesc') }}</div>
+                            <div class="flex-1 flex items-start gap-3">
+                                <i class="ph ph-clock text-xl text-text-secondary mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">{{ store.i18n.t('autoUpdateInterval') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('autoUpdateIntervalDesc') }}</div>
+                                </div>
                             </div>
                             <input type="number" v-model="settings.update_interval" min="1" class="input-field w-20 text-center">
                         </div>
                     </div>
 
                     <div class="setting-group">
-                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider">{{ store.i18n.t('database') }}</label>
+                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+                            <i class="ph ph-database text-base"></i>
+                            {{ store.i18n.t('database') }}
+                        </label>
                         <div class="setting-item">
-                            <div class="flex-1">
-                                <div class="font-medium mb-1">{{ store.i18n.t('autoCleanup') }}</div>
-                                <div class="text-xs text-text-secondary">{{ store.i18n.t('autoCleanupDesc') }}</div>
+                            <div class="flex-1 flex items-start gap-3">
+                                <i class="ph ph-broom text-xl text-text-secondary mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">{{ store.i18n.t('autoCleanup') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('autoCleanupDesc') }}</div>
+                                </div>
                             </div>
                             <input type="checkbox" v-model="settings.auto_cleanup_enabled" class="toggle">
                         </div>
                     </div>
 
                     <div class="setting-group">
-                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider">{{ store.i18n.t('translation') }}</label>
+                        <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+                            <i class="ph ph-globe text-base"></i>
+                            {{ store.i18n.t('translation') }}
+                        </label>
                         <div class="setting-item mb-4">
-                            <div class="flex-1">
-                                <div class="font-medium mb-1">{{ store.i18n.t('enableTranslation') }}</div>
-                                <div class="text-xs text-text-secondary">{{ store.i18n.t('enableTranslationDesc') }}</div>
+                            <div class="flex-1 flex items-start gap-3">
+                                <i class="ph ph-article text-xl text-text-secondary mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">{{ store.i18n.t('enableTranslation') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('enableTranslationDesc') }}</div>
+                                </div>
                             </div>
                             <input type="checkbox" v-model="settings.translation_enabled" class="toggle">
                         </div>
@@ -320,7 +347,7 @@ async function cleanupDatabase() {
                         <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider">{{ store.i18n.t('manageFeeds') }}</label>
                         
                         <div class="flex flex-wrap gap-2 mb-2">
-                            <button @click="$emit('close'); window.dispatchEvent(new CustomEvent('show-add-feed'))" class="btn-secondary text-sm py-1.5 px-3">
+                            <button @click="window.dispatchEvent(new CustomEvent('show-add-feed'))" class="btn-secondary text-sm py-1.5 px-3">
                                 <i class="ph ph-plus"></i> {{ store.i18n.t('addFeed') }}
                             </button>
                             <button @click="batchDelete" class="btn-danger text-sm py-1.5 px-3" :disabled="selectedFeeds.length === 0">
@@ -331,14 +358,14 @@ async function cleanupDatabase() {
                             </button>
                             <div class="flex-1"></div>
                             <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-                                <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="rounded border-border">
+                                <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="w-4 h-4 rounded border-border text-accent focus:ring-2 focus:ring-accent cursor-pointer">
                                 {{ store.i18n.t('selectAll') }}
                             </label>
                         </div>
 
                         <div class="border border-border rounded-lg bg-bg-secondary overflow-y-auto max-h-96">
                             <div v-for="feed in store.feeds" :key="feed.id" class="flex items-center p-2 border-b border-border last:border-0 bg-bg-primary hover:bg-bg-secondary gap-2">
-                                <input type="checkbox" :value="feed.id" v-model="selectedFeeds" class="shrink-0 rounded border-border">
+                                <input type="checkbox" :value="feed.id" v-model="selectedFeeds" class="w-4 h-4 shrink-0 rounded border-border text-accent focus:ring-2 focus:ring-accent cursor-pointer">
                                 <div class="truncate flex-1 min-w-0">
                                     <div class="font-medium truncate text-sm">{{ feed.title }}</div>
                                     <div class="text-xs text-text-secondary truncate">{{ feed.url }}</div>
@@ -356,7 +383,7 @@ async function cleanupDatabase() {
                     <img src="/assets/logo.svg" alt="Logo" class="h-16 w-auto mb-4 mx-auto">
                     <h3 class="text-xl font-bold mb-2">{{ store.i18n.t('appName') }}</h3>
                     <p class="text-text-secondary">{{ store.i18n.t('aboutApp') }}</p>
-                    <p class="text-text-secondary text-sm mt-2">{{ store.i18n.t('version') }} 1.0.0</p>
+                    <p class="text-text-secondary text-sm mt-2">{{ store.i18n.t('version') }} 1.1.0</p>
                     <div class="mt-6">
                         <a href="https://github.com/WCY-dt/MrRSS" target="_blank" class="inline-flex items-center gap-2 text-accent hover:text-accent-hover transition-colors text-sm font-medium">
                             <i class="ph ph-github-logo text-xl"></i>
@@ -393,7 +420,7 @@ async function cleanupDatabase() {
     @apply opacity-50 cursor-not-allowed;
 }
 .btn-danger {
-    @apply bg-transparent border-2 border-red-300 text-red-600 px-4 py-2 rounded-md cursor-pointer flex items-center gap-2 font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-400 transition-colors;
+    @apply bg-transparent border border-red-300 text-red-600 px-4 py-2 rounded-md cursor-pointer flex items-center gap-2 font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-400 transition-colors;
 }
 .btn-danger:disabled {
     @apply opacity-50 cursor-not-allowed;

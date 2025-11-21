@@ -46,7 +46,7 @@ function handleCancel() {
     @apply bg-accent text-white border-none px-5 py-2.5 rounded-lg cursor-pointer font-semibold hover:bg-accent-hover transition-colors;
 }
 .btn-danger {
-    @apply border-2 border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-400;
+    @apply border border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-400;
 }
 .btn-secondary {
     @apply bg-transparent border border-border text-text-primary px-5 py-2.5 rounded-lg cursor-pointer font-medium hover:bg-bg-tertiary transition-colors;

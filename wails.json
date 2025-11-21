@@ -1,13 +1,13 @@
 {
   "name": "MrRSS",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "MrRSS Developer",
     "email": "dev@mrrss.app"
   },
   "info": {
     "productName": "MrRSS",
-    "productVersion": "1.0.0",
+    "productVersion": "1.1.0",
     "companyName": "MrRSS Team",
     "copyright": "Copyright \u00a9 2025",
     "fileDescription": "A modern, standalone RSS reader",

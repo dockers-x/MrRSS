@@ -81,7 +81,7 @@ function onFeedContextMenu(e, feed) {
             x: e.clientX,
             y: e.clientY,
             items: [
-                { label: store.i18n.t('unsubscribe'), action: 'delete', icon: 'ph-trash' },
+                { label: store.i18n.t('unsubscribe'), action: 'delete', icon: 'ph-trash', danger: true },
                 { label: store.i18n.t('editSubscription'), action: 'edit', icon: 'ph-pencil' }
             ],
             data: feed,
