@@ -30,6 +30,7 @@ export const translations = {
         renameCategory: 'Rename Category',
         addToFavorites: 'Add to Favorites',
         removeFromFavorites: 'Remove from Favorites',
+        selectArticle: 'Select an article to start reading',
         
         // Settings Modal
         settingsTitle: 'Settings',
@@ -162,6 +163,7 @@ export const translations = {
         renameCategory: '重命名分类',
         addToFavorites: '添加到收藏',
         removeFromFavorites: '从收藏中移除',
+        selectArticle: '选择一篇文章开始阅读',
         
         // Settings Modal
         settingsTitle: '设置',

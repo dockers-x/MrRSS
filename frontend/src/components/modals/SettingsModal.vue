@@ -200,7 +200,7 @@ async function cleanupDatabase() {
 
 <template>
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-bg-primary w-full max-w-4xl h-[600px] flex flex-col rounded-2xl shadow-2xl border border-border overflow-hidden animate-fade-in">
+        <div class="bg-bg-primary w-full max-w-4xl h-[700px] flex flex-col rounded-2xl shadow-2xl border border-border overflow-hidden animate-fade-in">
             <div class="p-5 border-b border-border flex justify-between items-center shrink-0">
                 <h3 class="text-lg font-semibold m-0">{{ store.i18n.t('settingsTitle') }}</h3>
                 <span @click="emit('close')" class="text-2xl cursor-pointer text-text-secondary hover:text-text-primary">&times;</span>
@@ -393,7 +393,7 @@ async function cleanupDatabase() {
     @apply opacity-50 cursor-not-allowed;
 }
 .btn-danger {
-    @apply bg-transparent border-2 border-red-500 text-red-600 px-4 py-2 rounded-md cursor-pointer flex items-center gap-2 font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors;
+    @apply bg-transparent border-2 border-red-300 text-red-600 px-4 py-2 rounded-md cursor-pointer flex items-center gap-2 font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-400 transition-colors;
 }
 .btn-danger:disabled {
     @apply opacity-50 cursor-not-allowed;
