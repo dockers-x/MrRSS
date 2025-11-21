@@ -40,6 +40,11 @@ export const translations = {
         
         // General Settings
         appearance: 'Appearance',
+        theme: 'Theme',
+        themeDesc: 'Choose your preferred color scheme',
+        light: 'Light',
+        dark: 'Dark',
+        auto: 'Auto (Follow System)',
         darkMode: 'Dark Mode',
         darkModeDesc: 'Switch between light and dark themes',
         updates: 'Updates',
@@ -182,6 +187,11 @@ export const translations = {
         
         // General Settings
         appearance: '外观',
+        theme: '主题',
+        themeDesc: '选择您喜欢的配色方案',
+        light: '亮色',
+        dark: '暗色',
+        auto: '自动（跟随系统）',
         darkMode: '暗色模式',
         darkModeDesc: '在亮色和暗色主题之间切换',
         updates: '更新',

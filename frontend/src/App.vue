@@ -111,6 +111,9 @@ const contextMenu = ref({
 });
 
 onMounted(async () => {
+    // Initialize theme system
+    store.initTheme();
+    
     // Trigger immediate article refresh on app launch
     store.refreshFeeds();
     
@@ -123,6 +126,10 @@ onMounted(async () => {
         const data = await res.json();
         if (data.update_interval) {
             store.startAutoRefresh(parseInt(data.update_interval));
+        }
+        // Apply saved theme preference
+        if (data.theme) {
+            store.setTheme(data.theme);
         }
     } catch (e) {
         console.error(e);
@@ -147,11 +154,6 @@ onMounted(async () => {
             callback: e.detail.callback
         };
     });
-    
-    // Check theme
-    if (store.theme === 'dark') {
-        document.body.classList.add('dark-mode');
-    }
 });
 
 function toggleSidebar() {

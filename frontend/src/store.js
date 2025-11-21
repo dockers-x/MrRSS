@@ -12,7 +12,8 @@ export const store = reactive({
     page: 1,
     hasMore: true,
     searchQuery: '',
-    theme: localStorage.getItem('theme') || 'light',
+    themePreference: localStorage.getItem('themePreference') || 'auto', // 'light', 'dark', 'auto'
+    theme: 'light', // actual applied theme
     i18n: i18n, // Make i18n available in store
     
     // Actions
@@ -98,13 +99,52 @@ export const store = reactive({
     },
 
     toggleTheme() {
-        this.theme = this.theme === 'light' ? 'dark' : 'light';
-        localStorage.setItem('theme', this.theme);
-        if (this.theme === 'dark') {
+        // Cycle through: light -> dark -> auto -> light
+        if (this.themePreference === 'light') {
+            this.themePreference = 'dark';
+        } else if (this.themePreference === 'dark') {
+            this.themePreference = 'auto';
+        } else {
+            this.themePreference = 'light';
+        }
+        localStorage.setItem('themePreference', this.themePreference);
+        this.applyTheme();
+    },
+
+    setTheme(preference) {
+        this.themePreference = preference;
+        localStorage.setItem('themePreference', this.themePreference);
+        this.applyTheme();
+    },
+
+    applyTheme() {
+        let actualTheme = this.themePreference;
+        
+        // If auto, detect system preference
+        if (this.themePreference === 'auto') {
+            actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        this.theme = actualTheme;
+        
+        if (actualTheme === 'dark') {
             document.body.classList.add('dark-mode');
         } else {
             document.body.classList.remove('dark-mode');
         }
+    },
+
+    initTheme() {
+        // Listen for system theme changes
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', () => {
+            if (this.themePreference === 'auto') {
+                this.applyTheme();
+            }
+        });
+        
+        // Apply initial theme
+        this.applyTheme();
     },
 
     // Auto Refresh

@@ -67,11 +67,12 @@ func (db *DB) Init() error {
 		// Insert default settings if they don't exist
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('update_interval', '10')`)
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('translation_enabled', 'false')`)
-		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('target_language', 'es')`)
+		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('target_language', 'zh')`)
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('translation_provider', 'google')`)
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('deepl_api_key', '')`)
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_cleanup_enabled', 'false')`)
 		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('language', 'en')`)
+		_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'auto')`)
 	})
 	return err
 }

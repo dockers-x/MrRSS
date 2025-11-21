@@ -278,6 +278,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		apiKey, _ := h.DB.GetSetting("deepl_api_key")
 		autoCleanup, _ := h.DB.GetSetting("auto_cleanup_enabled")
 		language, _ := h.DB.GetSetting("language")
+		theme, _ := h.DB.GetSetting("theme")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":       interval,
 			"translation_enabled":   translationEnabled,
@@ -286,6 +287,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 			"deepl_api_key":         apiKey,
 			"auto_cleanup_enabled":  autoCleanup,
 			"language":              language,
+			"theme":                 theme,
 		})
 	} else if r.Method == http.MethodPost {
 		var req struct {
@@ -296,6 +298,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 			DeepLAPIKey         string `json:"deepl_api_key"`
 			AutoCleanupEnabled  string `json:"auto_cleanup_enabled"`
 			Language            string `json:"language"`
+			Theme               string `json:"theme"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -322,6 +325,10 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		
 		if req.Language != "" {
 			h.DB.SetSetting("language", req.Language)
+		}
+		
+		if req.Theme != "" {
+			h.DB.SetSetting("theme", req.Theme)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -443,11 +450,6 @@ func (h *Handler) HandleCheckUpdates(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"current_version": currentVersion,
 		"latest_version":  latestVersion,
-		"latest_tag":      release.TagName,
-		"release_name":    release.Name,
-		"release_url":     release.HTMLURL,
-		"release_notes":   release.Body,
-		"published_at":    release.PublishedAt,
 		"has_update":      hasUpdate,
 	})
 }

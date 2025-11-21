@@ -9,16 +9,17 @@ const selectedFeeds = ref([]);
 const settings = ref({
     update_interval: 10,
     translation_enabled: false,
-    target_language: 'en',
+    target_language: 'zh',
     translation_provider: 'google',
     deepl_api_key: '',
     auto_cleanup_enabled: false,
-    language: store.i18n.locale.value
+    language: store.i18n.locale.value,
+    theme: 'auto'
 });
 
 const updateInfo = ref(null);
 const checkingUpdates = ref(false);
-const appVersion = ref('1.1.1');
+const appVersion = ref('1.1.2');
 
 onMounted(async () => {
     // Fetch current version from API
@@ -39,15 +40,20 @@ onMounted(async () => {
         settings.value = {
             update_interval: data.update_interval || 10,
             translation_enabled: data.translation_enabled === 'true',
-            target_language: data.target_language || 'en',
+            target_language: data.target_language || 'zh',
             translation_provider: data.translation_provider || 'google',
             deepl_api_key: data.deepl_api_key || '',
             auto_cleanup_enabled: data.auto_cleanup_enabled === 'true',
-            language: data.language || store.i18n.locale.value
+            language: data.language || store.i18n.locale.value,
+            theme: data.theme || 'auto'
         };
         // Apply the saved language
         if (data.language) {
             store.i18n.setLocale(data.language);
+        }
+        // Apply the saved theme
+        if (data.theme) {
+            store.setTheme(data.theme);
         }
     } catch (e) {
         console.error(e);
@@ -66,10 +72,12 @@ async function saveSettings() {
                 translation_provider: settings.value.translation_provider,
                 deepl_api_key: settings.value.deepl_api_key,
                 auto_cleanup_enabled: settings.value.auto_cleanup_enabled.toString(),
-                language: settings.value.language
+                language: settings.value.language,
+                theme: settings.value.theme
             })
         });
         store.i18n.setLocale(settings.value.language);
+        store.setTheme(settings.value.theme);
         store.startAutoRefresh(settings.value.update_interval);
         emit('close');
     } catch (e) {
@@ -274,11 +282,15 @@ async function checkForUpdates() {
                             <div class="flex-1 flex items-start gap-3">
                                 <i class="ph ph-moon text-xl text-text-secondary mt-0.5"></i>
                                 <div class="flex-1">
-                                    <div class="font-medium mb-1">{{ store.i18n.t('darkMode') }}</div>
-                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('darkModeDesc') }}</div>
+                                    <div class="font-medium mb-1">{{ store.i18n.t('theme') }}</div>
+                                    <div class="text-xs text-text-secondary">{{ store.i18n.t('themeDesc') }}</div>
                                 </div>
                             </div>
-                            <input type="checkbox" :checked="store.theme === 'dark'" @change="store.toggleTheme()" class="toggle">
+                            <select v-model="settings.theme" class="input-field w-40">
+                                <option value="light">{{ store.i18n.t('light') }}</option>
+                                <option value="dark">{{ store.i18n.t('dark') }}</option>
+                                <option value="auto">{{ store.i18n.t('auto') }}</option>
+                            </select>
                         </div>
                         <div class="setting-item mt-3">
                             <div class="flex-1 flex items-start gap-3">
@@ -450,7 +462,7 @@ async function checkForUpdates() {
                     </div>
 
                     <div v-if="updateInfo && !updateInfo.error" class="mt-4 mx-auto max-w-md text-left bg-bg-secondary p-4 rounded-lg border border-border">
-                        <div class="flex items-start gap-3 mb-3">
+                        <div class="flex items-start gap-3">
                             <i v-if="updateInfo.has_update" class="ph ph-arrow-circle-up text-2xl text-green-500 mt-0.5"></i>
                             <i v-else class="ph ph-check-circle text-2xl text-accent mt-0.5"></i>
                             <div class="flex-1">
@@ -461,16 +473,6 @@ async function checkForUpdates() {
                                     <div>{{ store.i18n.t('currentVersion') }}: {{ updateInfo.current_version }}</div>
                                     <div v-if="updateInfo.has_update">{{ store.i18n.t('latestVersion') }}: {{ updateInfo.latest_version }}</div>
                                 </div>
-                            </div>
-                        </div>
-                        <div v-if="updateInfo.has_update" class="mt-3">
-                            <a :href="updateInfo.release_url" target="_blank" class="btn-primary inline-flex items-center gap-2 justify-center w-full">
-                                <i class="ph ph-download"></i>
-                                {{ store.i18n.t('downloadUpdate') }}
-                            </a>
-                            <div v-if="updateInfo.release_notes" class="mt-3 text-xs">
-                                <div class="font-semibold mb-1">{{ store.i18n.t('releaseNotes') }}:</div>
-                                <div class="text-text-secondary whitespace-pre-line max-h-32 overflow-y-auto">{{ updateInfo.release_notes }}</div>
                             </div>
                         </div>
                     </div>
