@@ -1,0 +1,12 @@
+{
+  "name": "mrrss-website",
+  "version": "1.0.0",
+  "description": "Website for MrRSS",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./dist/style.css --minify",
+    "dev": "tailwindcss -i ./src/input.css -o ./dist/style.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}
