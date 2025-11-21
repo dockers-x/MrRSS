@@ -32,7 +32,10 @@ go.work.sum
 # .vscode/
 
 # Wails
-build/
+build/bin/
+build/dmg/
+build/appimage/
+build/appimagetool-x86_64.AppImage
 dist/
 
 # database files
