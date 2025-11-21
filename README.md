@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/assets/logo.svg" alt="MrRSS Logo" width="120" height="120">
+  <img src="imgs/logo.svg" alt="MrRSS Logo" width="120" height="120">
   <h1>MrRSS</h1>
   <p><strong>A Modern, Cross-Platform Desktop RSS Reader</strong></p>
   
@@ -29,9 +29,7 @@
 
 ## 📸 Screenshots
 
-<div align="center">
-  <p><em>Coming soon - screenshots will be added in future releases</em></p>
-</div>
+![Screenshot](imgs/og.png)
 
 ## 🚀 Quick Start
 
