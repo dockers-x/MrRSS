@@ -73,7 +73,7 @@ EOF
 chmod +x "${APPDIR}/AppRun"
 
 # Copy icon (if exists, otherwise create placeholder)
-if [ -f "imgs/logo.svg" ]; then
+if [ -f "imgs/logo.svg" ] && (command -v inkscape &> /dev/null || command -v convert &> /dev/null); then
     echo "Converting icon..."
     # If inkscape is available, convert SVG to PNG
     if command -v inkscape &> /dev/null; then
@@ -82,9 +82,12 @@ if [ -f "imgs/logo.svg" ]; then
     elif command -v convert &> /dev/null; then
         convert -background none -size 256x256 "imgs/logo.svg" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png"
         cp "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png" "${APPDIR}/${APP_NAME}.png"
-    else
-        echo "Warning: Neither inkscape nor ImageMagick found. Icon conversion skipped."
     fi
+elif [ -f "build/appicon.png" ]; then
+    # Fallback to pre-built PNG icon from Wails build process
+    echo "Using existing PNG icon..."
+    cp "build/appicon.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png"
+    cp "build/appicon.png" "${APPDIR}/${APP_NAME}.png"
 fi
 
 # Copy desktop file to root
