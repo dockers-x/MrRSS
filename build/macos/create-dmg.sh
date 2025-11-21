@@ -12,7 +12,7 @@ set -e
 
 APP_NAME="MrRSS"
 # Get version from wails.json if available, otherwise use default
-VERSION=$(grep -o '"version":[[:space:]]*"[^"]*"' wails.json | cut -d'"' -f4 || echo "1.1.0")
+VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' wails.json 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "1.1.0")
 APP_PUBLISHER="MrRSS Team"
 APP_URL="https://github.com/WCY-dt/MrRSS"
 APP_DESCRIPTION="A Modern, Cross-Platform Desktop RSS Reader"
