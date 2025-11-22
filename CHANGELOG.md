@@ -8,74 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.3] - 2025-11-22
 
 ### Added
-- **Automatic Update System**: One-click download and installation of updates
-  - Automatically detects user's operating system and CPU architecture
-  - Downloads appropriate installer from GitHub releases
-  - Launches installer and prepares for update
-  - Fallback to manual download for unsupported platforms
-- **Multi-Platform Support**: Expanded from 3 to 8 build combinations
+
+- Automatically detects user's operating system and CPU architecture and ownloads appropriate installer from GitHub releases. Then launches installer and prepares for update
+- Multi-Platform Support:
   - Windows: x64 (amd64), ARM64, x86 (386)
   - Linux: x64 (amd64), ARM64 (aarch64), x86 (386)
   - macOS: Apple Silicon (arm64), Intel (amd64)
-- **Download Progress Indicators**: Visual feedback during update download and installation
-- **Internationalization**: Added i18n strings for update process (English and Chinese)
-  - downloading, downloadComplete, installingUpdate
-  - updateWillRestart, downloadFailed, installFailed
+- Visual feedback during update download and installation
 
 ### Changed
-- **Refactored SettingsModal**: Split large component (653 lines) into focused tab components
-  - SettingsModal.vue (380 lines) - Main orchestrator
-  - GeneralTab.vue (140 lines) - Appearance, updates, database, translation settings
-  - FeedsTab.vue (138 lines) - Data management and feed management
-  - AboutTab.vue (120 lines) - Version info, update checking, auto-update UI
-- **Removed macOS Universal Build**: Now only builds architecture-specific versions
-  - Improved build efficiency
-  - Users get optimized binaries for their specific architecture
 
-### Security
-- **Enhanced Update Security**:
-  - URL validation restricted to official repository (`https://github.com/WCY-dt/MrRSS/releases/download/`)
-  - Path traversal protection on asset names and file paths
-  - File type validation per platform (.exe/.appimage/.dmg)
-  - Regular file verification to prevent symlink exploitation
-  - CodeQL security scan passed with 0 vulnerabilities
-
-### Documentation
-- Updated README.md and README_zh.md with platform-specific download instructions
-- Added architecture guidance (x64, ARM64, x86, Apple Silicon, Intel)
-- Documented all 8 supported platform/architecture combinations
+- Removed macOS Universal Build
 
 ## [1.1.2] - 2025-11-22
 
 ### Added
-- **Theme Auto-Detection**: Automatically detect and apply system theme preference
-- **Translation Feature Improvements**: Better defaults for translation settings
+
+- Initial release preparation
+- OPML import/export functionality
+- Feed category organization
+- Automatically detect and apply system theme preference
+- Better defaults for translation settings
 - Version check functionality in Settings → About tab
 
 ### Changed
+
 - Simplified update check UI
 - Improved theme switching mechanism
 - Better handling of translation provider selection
 
 ### Fixed
+
+- Various bug fixes and stability improvements
+- UI refinements for better user experience
 - Theme switching issues between light and dark modes
 - Translation default language selection
 - Update notification display
 
-## [1.1.1] - 2025-11-21
-
-### Added
-- Initial release preparation
-- OPML import/export functionality
-- Feed category organization
-
-### Fixed
-- Various bug fixes and stability improvements
-- UI refinements for better user experience
-
 ## [1.1.0] - 2025-11-20
 
 ### Added
+
 - **Initial Public Release** of MrRSS
 - **Cross-Platform Support**: Native desktop app for Windows, macOS, and Linux
 - **RSS Feed Management**: Add, edit, and delete RSS feeds
@@ -90,33 +63,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-Language Support**: English and Chinese interface
 - **Theme Support**: Light, dark, and auto (system) themes
 
-### Technical Stack
-- Backend: Go 1.21+ with Wails v2
-- Frontend: Vue.js 3 with Composition API
-- Styling: Tailwind CSS
-- Database: SQLite
-- Build: Cross-platform builds for Windows, macOS, and Linux
-
 ---
 
 ## Release Notes
 
 ### Version Numbering
+
 MrRSS follows [Semantic Versioning](https://semver.org/):
+
 - **MAJOR** version for incompatible API changes
 - **MINOR** version for backwards-compatible functionality additions
 - **PATCH** version for backwards-compatible bug fixes
 
 ### Download
+
 Downloads for all platforms are available on the [GitHub Releases](https://github.com/WCY-dt/MrRSS/releases) page.
 
 ### Upgrade Notes
+
 When upgrading from a previous version:
+
 1. Your data (feeds, articles, settings) is preserved in platform-specific directories
 2. Database migrations are applied automatically on first launch
 3. For major version upgrades, please review the changelog for breaking changes
 
 ### Support
+
 - Report bugs: [GitHub Issues](https://github.com/WCY-dt/MrRSS/issues)
 - Feature requests: [GitHub Issues](https://github.com/WCY-dt/MrRSS/issues)
 - Documentation: [README](README.md)
