@@ -3,7 +3,7 @@
   <h1>MrRSS</h1>
   <p><strong>A Modern, Cross-Platform Desktop RSS Reader</strong></p>
   
-  [![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/WCY-dt/MrRSS/releases)
+  [![Version](https://img.shields.io/badge/version-1.1.4-blue.svg)](https://github.com/WCY-dt/MrRSS/releases)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
   [![Wails](https://img.shields.io/badge/Wails-v2-red)](https://wails.io/)
@@ -37,27 +37,9 @@
 
 Download the latest installer for your platform from the [Releases](https://github.com/WCY-dt/MrRSS/releases) page:
 
-**Windows:**
-
-- **x64 (64-bit)**: Download `MrRSS-{version}-windows-amd64-installer.exe`
-- **ARM64**: Download `MrRSS-{version}-windows-arm64-installer.exe`
-- Run the installer and follow the installation wizard
-- Launch MrRSS from Start Menu or Desktop shortcut
-
-**macOS:**
-
-- **Universal (Intel & Apple Silicon)**: Download `MrRSS-{version}-darwin-universal.dmg`
-- Open the DMG file
-- Drag MrRSS.app to your Applications folder
-- Launch MrRSS from Applications
-
-**Linux:**
-
-- **x64 (64-bit)**: Download `MrRSS-{version}-linux-amd64.AppImage`
-- **ARM64 (aarch64)**: Download `MrRSS-{version}-linux-arm64.AppImage`
-- Make it executable: `chmod +x MrRSS-*.AppImage`
-- Run: `./MrRSS-*.AppImage`
-- Or download the `.tar.gz` file for a portable version
+- **Windows:** `MrRSS-{version}-windows-amd64-installer.exe` / `MrRSS-{version}-windows-arm64-installer.exe`
+- **macOS:** `MrRSS-{version}-darwin-universal.dmg`
+- **Linux:** `MrRSS-{version}-linux-amd64.AppImage` / `MrRSS-{version}-linux-arm64.AppImage`
 
 #### Option 2: Build from Source
 
@@ -130,50 +112,6 @@ Start the application with hot reloading:
 wails dev
 ```
 
-This will:
-
-- Start the Go backend with live reload
-- Start the Vue.js frontend dev server
-- Open the application in a development window
-
-### Building for Production
-
-```bash
-# Build for current platform
-wails build
-
-# Build with specific flags
-wails build -clean -ldflags "-s -w"
-
-# For Linux on Ubuntu 24.04 or newer, use webkit2_41 tag:
-wails build -clean -ldflags "-s -w" -tags webkit2_41
-```
-
-#### Creating Installation Packages
-
-After building the application, you can create installer packages:
-
-**Windows (NSIS Installer):**
-
-```bash
-# Requires NSIS installed
-makensis build/windows/installer.nsi
-```
-
-**macOS (DMG):**
-
-```bash
-./build/macos/create-dmg.sh
-```
-
-**Linux (AppImage):**
-
-```bash
-./build/linux/create-appimage.sh
-```
-
-For Windows-specific builds, see [BUILD_WINDOWS.md](BUILD_WINDOWS.md).
-
 ### Running Tests
 
 ```bash
@@ -183,29 +121,6 @@ go test ./...
 # Frontend tests
 cd frontend
 npm test
-```
-
-## 📁 Project Structure
-
-```plaintext
-MrRSS/
-├── main.go                    # Application entry point
-├── wails.json                 # Wails configuration
-├── internal/                  # Backend Go code
-│   ├── database/             # SQLite database layer
-│   ├── feed/                 # RSS/Atom feed fetching & parsing
-│   ├── handlers/             # Application logic handlers
-│   ├── models/               # Data models
-│   ├── opml/                 # OPML import/export
-│   └── translation/          # Translation services
-├── frontend/                  # Vue.js frontend
-│   ├── src/
-│   │   ├── components/       # Vue components
-│   │   ├── store.js          # Global state management
-│   │   ├── i18n.js           # Internationalization
-│   │   └── App.vue           # Root component
-│   └── wailsjs/              # Auto-generated Go bindings
-└── build/                     # Build output directory
 ```
 
 ## 🎯 Usage
@@ -222,12 +137,6 @@ MrRSS/
 - **Right-click** on a feed to edit or unsubscribe
 - **Right-click** on a category to rename it
 - Use the **Settings → Feeds** tab to bulk manage subscriptions
-
-### Keyboard Shortcuts
-
-- `Ctrl/Cmd + R` - Refresh all feeds
-- `Esc` - Close modals
-- Arrow keys - Navigate articles
 
 ## ⚙️ Configuration
 

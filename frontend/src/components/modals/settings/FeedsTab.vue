@@ -59,7 +59,7 @@ function handleBatchMove() {
 <template>
     <div class="space-y-6">
         <div class="setting-group">
-            <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+            <label class="font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
                 <i class="ph ph-hard-drives text-base"></i>
                 {{ store.i18n.t('dataManagement') }}
             </label>
@@ -83,7 +83,7 @@ function handleBatchMove() {
         </div>
         
         <div class="setting-group">
-            <label class="block font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
+            <label class="font-semibold mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2">
                 <i class="ph ph-rss text-base"></i>
                 {{ store.i18n.t('manageFeeds') }}
             </label>

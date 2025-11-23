@@ -2,7 +2,6 @@
 import { ref } from 'vue';
 import { store } from '../../store.js';
 
-const isOpen = ref(false);
 const title = ref('');
 const url = ref('');
 const category = ref('');

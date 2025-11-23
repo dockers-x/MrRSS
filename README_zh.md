@@ -3,7 +3,7 @@
   <h1>MrRSS</h1>
   <p><strong>一个现代化的跨平台桌面 RSS 阅读器</strong></p>
   
-  [![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/WCY-dt/MrRSS/releases)
+  [![Version](https://img.shields.io/badge/version-1.1.4-blue.svg)](https://github.com/WCY-dt/MrRSS/releases)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
   [![Wails](https://img.shields.io/badge/Wails-v2-red)](https://wails.io/)
@@ -37,27 +37,9 @@
 
 从 [Releases](https://github.com/WCY-dt/MrRSS/releases) 页面下载适合您平台的最新安装包：
 
-**Windows:**
-
-- **x64 (64位)**: 下载 `MrRSS-{version}-windows-amd64-installer.exe`
-- **ARM64**: 下载 `MrRSS-{version}-windows-arm64-installer.exe`
-- 运行安装程序并按照向导操作
-- 从开始菜单或桌面快捷方式启动 MrRSS
-
-**macOS:**
-
-- **通用版 (Intel 和 Apple Silicon)**: 下载 `MrRSS-{version}-darwin-universal.dmg`
-- 打开 DMG 文件
-- 将 MrRSS.app 拖入应用程序文件夹
-- 从应用程序中启动 MrRSS
-
-**Linux:**
-
-- **x64 (64位)**: 下载 `MrRSS-{version}-linux-amd64.AppImage`
-- **ARM64 (aarch64)**: 下载 `MrRSS-{version}-linux-arm64.AppImage`
-- 添加执行权限: `chmod +x MrRSS-*.AppImage`
-- 运行: `./MrRSS-*.AppImage`
-- 或者下载 `.tar.gz` 文件使用便携版
+- **Windows:** `MrRSS-{version}-windows-amd64-installer.exe` / `MrRSS-{version}-windows-arm64-installer.exe`
+- **macOS:** `MrRSS-{version}-darwin-universal.dmg`
+- **Linux:** `MrRSS-{version}-linux-amd64.AppImage` / `MrRSS-{version}-linux-arm64.AppImage`
 
 #### 选项 2: 源码构建
 
@@ -130,50 +112,6 @@ MrRSS 将所有用户数据（数据库、设置）存储在特定平台的目�
 wails dev
 ```
 
-这将：
-
-- 启动带有实时重载的 Go 后端
-- 启动 Vue.js 前端开发服务器
-- 在开发窗口中打开应用
-
-### 生产环境构建
-
-```bash
-# 为当前平台构建
-wails build
-
-# 使用特定标志构建
-wails build -clean -ldflags "-s -w"
-
-# 对于 Ubuntu 24.04 或更新版本的 Linux，使用 webkit2_41 标签：
-wails build -clean -ldflags "-s -w" -tags webkit2_41
-```
-
-#### 创建安装包
-
-构建应用后，您可以创建安装包：
-
-**Windows (NSIS 安装程序):**
-
-```bash
-# 需要安装 NSIS
-makensis build/windows/installer.nsi
-```
-
-**macOS (DMG):**
-
-```bash
-./build/macos/create-dmg.sh
-```
-
-**Linux (AppImage):**
-
-```bash
-./build/linux/create-appimage.sh
-```
-
-关于 Windows 特定构建说明，请参阅 [BUILD_WINDOWS.md](BUILD_WINDOWS.md)。
-
 ### 运行测试
 
 ```bash
@@ -183,29 +121,6 @@ go test ./...
 # 前端测试
 cd frontend
 npm test
-```
-
-## 📁 项目结构
-
-```plaintext
-MrRSS/
-├── main.go                    # 应用入口点
-├── wails.json                 # Wails 配置
-├── internal/                  # 后端 Go 代码
-│   ├── database/             # SQLite 数据库层
-│   ├── feed/                 # RSS/Atom 订阅源获取与解析
-│   ├── handlers/             # 应用逻辑处理程序
-│   ├── models/               # 数据模型
-│   ├── opml/                 # OPML 导入/导出
-│   └── translation/          # 翻译服务
-├── frontend/                  # Vue.js 前端
-│   ├── src/
-│   │   ├── components/       # Vue 组件
-│   │   ├── store.js          # 全局状态管理
-│   │   ├── i18n.js           # 国际化
-│   │   └── App.vue           # 根组件
-│   └── wailsjs/              # 自动生成的 Go 绑定
-└── build/                     # 构建输出目录
 ```
 
 ## 🎯 使用说明
@@ -222,12 +137,6 @@ MrRSS/
 - **右键点击** 订阅源可进行编辑或取消订阅
 - **右键点击** 分类可重命名
 - 使用 **设置 → 订阅源** 选项卡进行批量管理
-
-### 快捷键
-
-- `Ctrl/Cmd + R` - 刷新所有订阅源
-- `Esc` - 关闭模态框
-- 方向键 - 浏览文章
 
 ## ⚙️ 配置
 

@@ -4,7 +4,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { BrowserOpenURL } from '../wailsjs/wailsjs/runtime/runtime.js';
 
 const listRef = ref(null);
-const articleRefs = ref({});
 const translationSettings = ref({
     enabled: false,
     targetLang: 'en'
@@ -84,7 +83,7 @@ async function translateArticle(article) {
     }
 }
 
-function observeArticle(el, articleId) {
+function observeArticle(el) {
     if (el && observer && translationSettings.value.enabled) {
         observer.observe(el);
     }
@@ -200,7 +199,7 @@ async function refreshArticles() {
             
             <div v-for="article in filteredArticles" :key="article.id" 
                  :data-article-id="article.id"
-                 :ref="el => observeArticle(el, article.id)"
+                 :ref="el => observeArticle(el)"
                  @click="selectArticle(article)"
                  @contextmenu="onArticleContextMenu($event, article)"
                  :class="['article-card', article.is_read ? 'read' : '', article.is_favorite ? 'favorite' : '', store.currentArticleId === article.id ? 'active' : '']">

@@ -30,6 +30,7 @@ body {
 
 /* Disable selection and dragging for UI elements */
 button, .nav-item, .category-header, .feed-item, .article-card, .action-btn, .footer-btn, .tab-btn {
+    -ms-user-select: none;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -38,6 +39,7 @@ button, .nav-item, .category-header, .feed-item, .article-card, .action-btn, .fo
 
 /* Allow selection for input fields, textareas */
 input, textarea {
+    -ms-user-select: text;
     user-select: text;
     -webkit-user-select: text;
     -moz-user-select: text;
