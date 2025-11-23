@@ -1,5 +1,3 @@
-// Package handlers contains the HTTP handlers for the application.
-// It defines the Handler struct which holds dependencies like the database and fetcher.
 package handlers
 
 import (
@@ -21,6 +19,7 @@ import (
 	"MrRSS/internal/models"
 	"MrRSS/internal/opml"
 	"MrRSS/internal/translation"
+	"MrRSS/internal/utils"
 	"MrRSS/internal/version"
 )
 
@@ -368,6 +367,17 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 
 		if req.StartupOnBoot != "" {
 			h.DB.SetSetting("startup_on_boot", req.StartupOnBoot)
+			
+			// Apply the startup setting
+			if req.StartupOnBoot == "true" {
+				if err := utils.EnableStartup(); err != nil {
+					log.Printf("Failed to enable startup: %v", err)
+				}
+			} else {
+				if err := utils.DisableStartup(); err != nil {
+					log.Printf("Failed to disable startup: %v", err)
+				}
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)
