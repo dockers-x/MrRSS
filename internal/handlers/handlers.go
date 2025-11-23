@@ -368,16 +368,22 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if req.StartupOnBoot != "" {
-			h.DB.SetSetting("startup_on_boot", req.StartupOnBoot)
+			// Get current value to check if it changed
+			currentValue, _ := h.DB.GetSetting("startup_on_boot")
 			
-			// Apply the startup setting
-			if req.StartupOnBoot == "true" {
-				if err := utils.EnableStartup(); err != nil {
-					log.Printf("Failed to enable startup: %v", err)
-				}
-			} else {
-				if err := utils.DisableStartup(); err != nil {
-					log.Printf("Failed to disable startup: %v", err)
+			// Only apply if the value changed
+			if currentValue != req.StartupOnBoot {
+				h.DB.SetSetting("startup_on_boot", req.StartupOnBoot)
+				
+				// Apply the startup setting
+				if req.StartupOnBoot == "true" {
+					if err := utils.EnableStartup(); err != nil {
+						log.Printf("Failed to enable startup: %v", err)
+					}
+				} else {
+					if err := utils.DisableStartup(); err != nil {
+						log.Printf("Failed to disable startup: %v", err)
+					}
 				}
 			}
 		}
