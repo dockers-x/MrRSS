@@ -141,6 +141,11 @@ func (f *Fetcher) FetchFeed(ctx context.Context, feed models.Feed) {
 	if feed.ImageURL == "" && parsedFeed.Image != nil {
 		f.db.UpdateFeedImage(feed.ID, parsedFeed.Image.URL)
 	}
+	
+	// Update Feed Link if available and not set
+	if feed.Link == "" && parsedFeed.Link != "" {
+		f.db.UpdateFeedLink(feed.ID, parsedFeed.Link)
+	}
 
 	// Check translation settings
 	translationEnabledStr, _ := f.db.GetSetting("translation_enabled")
@@ -230,6 +235,7 @@ func (f *Fetcher) AddSubscription(url string, category string, customTitle strin
 	feed := &models.Feed{
 		Title:       title,
 		URL:         url,
+		Link:        parsedFeed.Link,
 		Description: parsedFeed.Description,
 		Category:    category,
 	}
@@ -245,6 +251,7 @@ func (f *Fetcher) ImportSubscription(title, url, category string) error {
 	feed := &models.Feed{
 		Title:    title,
 		URL:      url,
+		Link:     "", // Link will be fetched later when feed is refreshed
 		Category: category,
 	}
 	return f.db.AddFeed(feed)

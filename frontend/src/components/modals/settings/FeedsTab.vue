@@ -58,6 +58,14 @@ function handleBatchMove() {
     emit('batch-move', selectedFeeds.value);
     selectedFeeds.value = [];
 }
+
+function getFavicon(url) {
+    try {
+        return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}`;
+    } catch {
+        return '';
+    }
+}
 </script>
 
 <template>
@@ -112,9 +120,19 @@ function handleBatchMove() {
             <div class="border border-border rounded-lg bg-bg-secondary overflow-y-auto max-h-60 sm:max-h-96">
                 <div v-for="feed in store.feeds" :key="feed.id" class="flex items-center p-1.5 sm:p-2 border-b border-border last:border-0 bg-bg-primary hover:bg-bg-secondary gap-1.5 sm:gap-2">
                     <input type="checkbox" :value="feed.id" v-model="selectedFeeds" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 rounded border-border text-accent focus:ring-2 focus:ring-accent cursor-pointer">
+                    <div class="w-4 h-4 flex items-center justify-center shrink-0">
+                        <img :src="feed.image_url || getFavicon(feed.url)" class="w-full h-full object-contain" @error="$event.target.style.display='none'">
+                    </div>
                     <div class="truncate flex-1 min-w-0">
                         <div class="font-medium truncate text-xs sm:text-sm">{{ feed.title }}</div>
-                        <div class="text-xs text-text-secondary truncate hidden sm:block">{{ feed.url }}</div>
+                        <div class="text-xs text-text-secondary truncate hidden sm:block">
+                            <span v-if="feed.category" class="inline-flex items-center gap-1">
+                                <PhFolder :size="10" class="inline" />
+                                {{ feed.category }}
+                                <span class="mx-1">•</span>
+                            </span>
+                            <span>{{ feed.url }}</span>
+                        </div>
                     </div>
                     <div class="flex gap-0.5 sm:gap-1 shrink-0">
                         <button @click="handleEditFeed(feed)" class="text-accent hover:bg-bg-tertiary p-1 rounded text-sm" :title="store.i18n.t('edit')"><PhPencil :size="14" class="sm:w-4 sm:h-4" /></button>

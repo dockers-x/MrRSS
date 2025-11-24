@@ -29,6 +29,10 @@ export const translations = {
         viewOriginal: 'View Original',
         viewContent: 'View Content',
         renderContent: 'Render Content',
+        close: 'Close',
+        zoomIn: 'Zoom In',
+        zoomOut: 'Zoom Out',
+        imageViewerHelp: 'Use mouse wheel or +/- keys to zoom • Drag to move • ESC to close',
         
         // Context Menu
         unsubscribe: 'Unsubscribe',
@@ -185,6 +189,10 @@ export const translations = {
         errorCleaningDatabase: 'Error cleaning up database',
         importFailed: 'Import failed: {error}',
         
+        // Loading Messages
+        loadingContent: 'Loading content',
+        fetchingArticleContent: 'Fetching article content from RSS feed...',
+        
         // Prompts
         enterCategoryName: 'Enter new category name:',
         moveFeeds: 'Move Feeds',
@@ -220,6 +228,10 @@ export const translations = {
         viewOriginal: '查看原网页',
         viewContent: '查看内容',
         renderContent: '渲染内容',
+        close: '关闭',
+        zoomIn: '放大',
+        zoomOut: '缩小',
+        imageViewerHelp: '使用鼠标滚轮或 +/- 键缩放 • 拖动移动 • ESC 关闭',
         
         // Context Menu
         unsubscribe: '取消订阅',
@@ -375,6 +387,10 @@ export const translations = {
         errorUpdatingFeed: '更新订阅时出错',
         errorCleaningDatabase: '清理数据库时出错',
         importFailed: '导入失败：{error}',
+        
+        // Loading Messages
+        loadingContent: '加载内容中',
+        fetchingArticleContent: '正在从 RSS 源获取文章内容...',
         
         // Prompts
         enterCategoryName: '输入新的分类名称：',

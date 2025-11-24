@@ -5,6 +5,22 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-11-24
+
+### Added
+
+- Feed icons now display in the Settings > Feeds tab feed list for better visual identification
+- Website homepage link stored for each feed (from RSS feed metadata)
+
+### Changed
+
+- "Open Website" context menu action now opens the feed's website homepage (if available) instead of RSS feed URL, with fallback to RSS URL
+- All hardcoded strings now properly use i18n translations for better internationalization support
+
+### Fixed
+
+- Replaced native `prompt()` with custom `showInput()` dialog for consistent UI
+
 ## [1.1.7] - 2025-11-24
 
 ### Added

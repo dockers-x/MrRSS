@@ -16,7 +16,7 @@ const props = defineProps({
     downloadProgress: { type: Number, default: 0 }
 });
 
-const appVersion = ref('1.1.7');
+const appVersion = ref('1.1.8');
 
 onMounted(async () => {
     // Fetch current version from API

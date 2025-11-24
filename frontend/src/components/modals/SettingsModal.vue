@@ -82,11 +82,11 @@ function handleImportOPML(event) {
             body: content
         }).then(async res => {
             if (res.ok) {
-                window.showToast('OPML Imported. Feeds will appear shortly.', 'success');
+                window.showToast(store.i18n.t('opmlImportedSuccess'), 'success');
                 store.fetchFeeds();
             } else {
                 const text = await res.text();
-                window.showToast('Import failed: ' + text, 'error');
+                window.showToast(store.i18n.t('importFailed', { error: text }), 'error');
             }
         });
     };
@@ -99,10 +99,10 @@ function handleExportOPML() {
 
 async function handleCleanupDatabase() {
     const confirmed = await window.showConfirm({
-        title: 'Clean Database',
-        message: 'This will delete all articles except read and favorited ones. Continue?',
-        confirmText: 'Clean',
-        cancelText: 'Cancel',
+        title: store.i18n.t('cleanDatabaseTitle'),
+        message: store.i18n.t('cleanDatabaseMessage'),
+        confirmText: store.i18n.t('clean'),
+        cancelText: store.i18n.t('cancel'),
         isDanger: true
     });
     if (!confirmed) return;
@@ -111,14 +111,14 @@ async function handleCleanupDatabase() {
         const res = await fetch('/api/articles/cleanup', { method: 'POST' });
         if (res.ok) {
             const result = await res.json();
-            window.showToast(`Database cleaned up successfully. ${result.deleted} articles deleted.`, 'success');
+            window.showToast(store.i18n.t('databaseCleanedSuccess', { count: result.deleted }), 'success');
             store.fetchArticles();
         } else {
-            window.showToast('Error cleaning up database', 'error');
+            window.showToast(store.i18n.t('errorCleaningDatabase'), 'error');
         }
     } catch (e) {
         console.error(e);
-        window.showToast('Error cleaning up database', 'error');
+        window.showToast(store.i18n.t('errorCleaningDatabase'), 'error');
     }
 }
 
@@ -132,25 +132,25 @@ function handleEditFeed(feed) {
 
 async function handleDeleteFeed(id) {
     const confirmed = await window.showConfirm({
-        title: 'Delete Feed',
-        message: 'Are you sure you want to delete this feed?',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: store.i18n.t('deleteFeedTitle'),
+        message: store.i18n.t('deleteFeedMessage'),
+        confirmText: store.i18n.t('delete'),
+        cancelText: store.i18n.t('cancel'),
         isDanger: true
     });
     if (!confirmed) return;
     
     await fetch(`/api/feeds/delete?id=${id}`, { method: 'POST' });
     store.fetchFeeds();
-    window.showToast('Feed deleted successfully', 'success');
+    window.showToast(store.i18n.t('feedDeletedSuccess'), 'success');
 }
 
 async function handleBatchDelete(selectedIds) {
     const confirmed = await window.showConfirm({
-        title: 'Delete Multiple Feeds',
-        message: `Are you sure you want to delete ${selectedIds.length} feeds?`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: store.i18n.t('deleteMultipleFeedsTitle'),
+        message: store.i18n.t('deleteMultipleFeedsMessage', { count: selectedIds.length }),
+        confirmText: store.i18n.t('delete'),
+        cancelText: store.i18n.t('cancel'),
         isDanger: true
     });
     if (!confirmed) return;
@@ -158,7 +158,7 @@ async function handleBatchDelete(selectedIds) {
     const promises = selectedIds.map(id => fetch(`/api/feeds/delete?id=${id}`, { method: 'POST' }));
     await Promise.all(promises);
     store.fetchFeeds();
-    window.showToast('Feeds deleted successfully', 'success');
+    window.showToast(store.i18n.t('feedsDeletedSuccess'), 'success');
 }
 
 async function handleBatchMove(selectedIds) {
@@ -190,7 +190,7 @@ async function handleBatchMove(selectedIds) {
 
     await Promise.all(promises);
     store.fetchFeeds();
-    window.showToast('Feeds moved successfully', 'success');
+    window.showToast(store.i18n.t('feedsMovedSuccess'), 'success');
 }
 
 // About tab event handlers

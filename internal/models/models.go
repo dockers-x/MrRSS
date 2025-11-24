@@ -6,6 +6,7 @@ type Feed struct {
 	ID          int64     `json:"id"`
 	Title       string    `json:"title"`
 	URL         string    `json:"url"`
+	Link        string    `json:"link"`        // Website homepage link
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
 	ImageURL    string    `json:"image_url"` // New field

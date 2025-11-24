@@ -79,6 +79,11 @@ func (db *DB) Init() error {
 	_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('last_article_update', '')`)
 	_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('show_hidden_articles', 'false')`)
 	_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES ('default_view_mode', 'original')`)
+	
+	// Migration: Add link column to feeds table if it doesn't exist
+	// Note: SQLite doesn't support IF NOT EXISTS for ALTER TABLE ADD COLUMN.
+	// Error is ignored - if column exists, the operation fails harmlessly.
+	_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN link TEXT DEFAULT ''`)
 	})
 	return err
 }
@@ -93,6 +98,7 @@ func initSchema(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT,
 		url TEXT UNIQUE,
+		link TEXT DEFAULT '',
 		description TEXT,
 		category TEXT DEFAULT '',
 		image_url TEXT DEFAULT '',
@@ -150,8 +156,8 @@ func runMigrations(db *sql.DB) error {
 
 func (db *DB) AddFeed(feed *models.Feed) error {
 	db.WaitForReady()
-	query := `INSERT OR IGNORE INTO feeds (title, url, description, category, image_url, last_updated) VALUES (?, ?, ?, ?, ?, ?)`
-	_, err := db.Exec(query, feed.Title, feed.URL, feed.Description, feed.Category, feed.ImageURL, time.Now())
+	query := `INSERT OR IGNORE INTO feeds (title, url, link, description, category, image_url, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := db.Exec(query, feed.Title, feed.URL, feed.Link, feed.Description, feed.Category, feed.ImageURL, time.Now())
 	return err
 }
 
@@ -168,7 +174,7 @@ func (db *DB) DeleteFeed(id int64) error {
 
 func (db *DB) GetFeeds() ([]models.Feed, error) {
 	db.WaitForReady()
-	rows, err := db.Query("SELECT id, title, url, description, category, image_url, last_updated, last_error FROM feeds")
+	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, last_updated, last_error FROM feeds")
 	if err != nil {
 		return nil, err
 	}
@@ -177,10 +183,11 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 	var feeds []models.Feed
 	for rows.Next() {
 		var f models.Feed
-		var category, imageURL, lastError sql.NullString
-		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError); err != nil {
+		var link, category, imageURL, lastError sql.NullString
+		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError); err != nil {
 			return nil, err
 		}
+		f.Link = link.String
 		f.Category = category.String
 		f.ImageURL = imageURL.String
 		f.LastError = lastError.String
@@ -307,6 +314,12 @@ func (db *DB) UpdateFeedCategory(id int64, category string) error {
 func (db *DB) UpdateFeedImage(id int64, imageURL string) error {
 	db.WaitForReady()
 	_, err := db.Exec("UPDATE feeds SET image_url = ? WHERE id = ?", imageURL, id)
+	return err
+}
+
+func (db *DB) UpdateFeedLink(id int64, link string) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE feeds SET link = ? WHERE id = ?", link, id)
 	return err
 }
 

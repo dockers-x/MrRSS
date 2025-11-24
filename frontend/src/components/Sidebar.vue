@@ -129,21 +129,24 @@ async function handleFeedAction(action, feed) {
         window.showToast(store.i18n.t('markedAllAsRead'), 'success');
     } else if (action === 'delete') {
         const confirmed = await window.showConfirm({
-            title: 'Unsubscribe',
-            message: `Are you sure you want to unsubscribe from ${feed.title}?`,
-            confirmText: 'Unsubscribe',
-            cancelText: 'Cancel',
+            title: store.i18n.t('unsubscribeTitle'),
+            message: store.i18n.t('unsubscribeMessage', { name: feed.title }),
+            confirmText: store.i18n.t('unsubscribe'),
+            cancelText: store.i18n.t('cancel'),
             isDanger: true
         });
         if (confirmed) {
             await fetch(`/api/feeds/delete?id=${feed.id}`, { method: 'POST' });
             store.fetchFeeds();
-            window.showToast('Successfully unsubscribed', 'success');
+            window.showToast(store.i18n.t('unsubscribedSuccess'), 'success');
         }
     } else if (action === 'edit') {
         window.dispatchEvent(new CustomEvent('show-edit-feed', { detail: feed }));
     } else if (action === 'openWebsite') {
-        BrowserOpenURL(feed.url);
+        // Prefer the website link (homepage) over the RSS feed URL
+        // Use feed.link if available (website homepage), otherwise fall back to feed.url (RSS feed)
+        const urlToOpen = feed.link || feed.url;
+        BrowserOpenURL(urlToOpen);
     }
 }
 
@@ -190,7 +193,13 @@ async function handleCategoryAction(action, categoryName) {
         
         window.showToast(store.i18n.t('markedAllAsRead'), 'success');
     } else if (action === 'rename') {
-        const newName = prompt('Enter new category name:', categoryName);
+        const newName = await window.showInput({
+            title: store.i18n.t('renameCategory'),
+            message: store.i18n.t('enterCategoryName'),
+            defaultValue: categoryName,
+            confirmText: store.i18n.t('confirm'),
+            cancelText: store.i18n.t('cancel')
+        });
         if (newName && newName !== categoryName) {
             const feedsToUpdate = store.feeds.filter(f => f.category === categoryName || f.category.startsWith(categoryName + '/'));
             
