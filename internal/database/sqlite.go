@@ -196,6 +196,24 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 	return feeds, nil
 }
 
+// GetFeedByID retrieves a specific feed by its ID
+func (db *DB) GetFeedByID(id int64) (*models.Feed, error) {
+	db.WaitForReady()
+	row := db.QueryRow("SELECT id, title, url, link, description, category, image_url, last_updated, last_error FROM feeds WHERE id = ?", id)
+	
+	var f models.Feed
+	var link, category, imageURL, lastError sql.NullString
+	if err := row.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError); err != nil {
+		return nil, err
+	}
+	f.Link = link.String
+	f.Category = category.String
+	f.ImageURL = imageURL.String
+	f.LastError = lastError.String
+	
+	return &f, nil
+}
+
 func (db *DB) SaveArticle(article *models.Article) error {
 	db.WaitForReady()
 	query := `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, published_at, translated_title, content, is_read, is_favorite, is_hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

@@ -59,6 +59,7 @@ export const translations = {
         startDiscovery: 'Click Discover to find blogs',
         subscribeSelected: 'Subscribe Selected',
         blogsSubscribedSuccess: '{count} blogs subscribed successfully',
+        blogsSubscribedPartial: '{successful} blogs subscribed, {failed} failed',
         errorSubscribingBlogs: 'Error subscribing to blogs',
         
         // Settings Modal
@@ -272,6 +273,7 @@ export const translations = {
         startDiscovery: '点击发现按钮以查找博客',
         subscribeSelected: '订阅选中',
         blogsSubscribedSuccess: '成功订阅 {count} 个博客',
+        blogsSubscribedPartial: '成功订阅 {successful} 个，失败 {failed} 个',
         errorSubscribingBlogs: '订阅博客时出错',
         
         // Settings Modal

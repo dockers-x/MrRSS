@@ -403,19 +403,25 @@ func (s *Service) isValidFeed(ctx context.Context, feedURL string) bool {
 			return false
 		}
 
-		resp, err = s.client.Do(req)
+		resp2, err := s.client.Do(req)
 		if err != nil {
 			return false
 		}
-		defer resp.Body.Close()
+		defer resp2.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
+		if resp2.StatusCode != http.StatusOK {
 			return false
 		}
 
 		// Read first few bytes to check if it's XML
 		buf := make([]byte, 512)
-		n, _ := io.ReadAtLeast(resp.Body, buf, 1)
+		n, err := io.ReadAtLeast(resp2.Body, buf, 1)
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+			return false
+		}
+		if n == 0 {
+			return false
+		}
 		content := string(buf[:n])
 
 		// Check for XML declaration and RSS/Atom tags

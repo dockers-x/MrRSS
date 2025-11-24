@@ -4,6 +4,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1048,23 +1049,14 @@ func (h *Handler) HandleDiscoverBlogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the feed to discover from
-	feeds, err := h.DB.GetFeeds()
+	// Get the specific feed by ID
+	targetFeed, err := h.DB.GetFeedByID(req.FeedID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var targetFeed *models.Feed
-	for i := range feeds {
-		if feeds[i].ID == req.FeedID {
-			targetFeed = &feeds[i]
-			break
+		if err == sql.ErrNoRows {
+			http.Error(w, "Feed not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	}
-
-	if targetFeed == nil {
-		http.Error(w, "Feed not found", http.StatusNotFound)
 		return
 	}
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { store } from '../../store.js';
 import { PhX, PhCheck, PhGlobe, PhRss, PhCircleNotch } from "@phosphor-icons/vue";
 
@@ -86,9 +86,17 @@ async function subscribeSelected() {
     }
 
     try {
-        await Promise.all(subscribePromises);
+        const results = await Promise.allSettled(subscribePromises);
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+        
         await store.fetchFeeds();
-        window.showToast(store.i18n.t('blogsSubscribedSuccess', { count: selectedBlogs.value.size }), 'success');
+        
+        if (failed === 0) {
+            window.showToast(store.i18n.t('blogsSubscribedSuccess', { count: successful }), 'success');
+        } else {
+            window.showToast(store.i18n.t('blogsSubscribedPartial', { successful, failed }), 'warning');
+        }
         emit('close');
     } catch (error) {
         console.error('Subscription error:', error);
@@ -100,10 +108,12 @@ function close() {
     emit('close');
 }
 
-// Start discovery when modal is shown
-if (props.show) {
-    startDiscovery();
-}
+// Watch for modal opening and trigger discovery
+watch(() => props.show, (newShow) => {
+    if (newShow) {
+        startDiscovery();
+    }
+});
 </script>
 
 <template>
