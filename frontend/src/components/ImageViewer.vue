@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { store } from '../store.js';
 import { PhX, PhMagnifyingGlassMinus, PhMagnifyingGlassPlus } from "@phosphor-icons/vue";
 
 const props = defineProps({
