@@ -1,17 +1,14 @@
 <script setup>
 import { store } from '../../../store.js';
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { 
     PhHardDrives, PhUpload, PhDownload, PhBroom, PhRss, PhPlus, 
-    PhTrash, PhFolder, PhPencil, PhMagnifyingGlass, PhCircleNotch
+    PhTrash, PhFolder, PhPencil, PhMagnifyingGlass
 } from "@phosphor-icons/vue";
 
-const emit = defineEmits(['import-opml', 'export-opml', 'cleanup-database', 'add-feed', 'edit-feed', 'delete-feed', 'batch-delete', 'batch-move']);
+const emit = defineEmits(['import-opml', 'export-opml', 'cleanup-database', 'add-feed', 'edit-feed', 'delete-feed', 'batch-delete', 'batch-move', 'discover-all']);
 
 const selectedFeeds = ref([]);
-const isDiscoveringAll = ref(false);
-const discoveryProgress = ref({ message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 });
-let pollInterval = null;
 
 const isAllSelected = computed(() => {
     return store.feeds && store.feeds.length > 0 && selectedFeeds.value.length === store.feeds.length;
@@ -38,111 +35,8 @@ function handleCleanupDatabase() {
     emit('cleanup-database');
 }
 
-function getHostname(url) {
-    try {
-        return new URL(url).hostname;
-    } catch {
-        return url;
-    }
-}
-
-async function handleDiscoverAll() {
-    isDiscoveringAll.value = true;
-    discoveryProgress.value = { message: store.i18n.t('preparingDiscovery'), detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
-    
-    // Clear any existing poll interval
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-    }
-
-    try {
-        // Clear any previous discovery state
-        await fetch('/api/feeds/discover-all/clear', { method: 'POST' });
-
-        // Start batch discovery in background
-        const startResponse = await fetch('/api/feeds/discover-all/start', {
-            method: 'POST'
-        });
-
-        if (!startResponse.ok) {
-            const errorText = await startResponse.text();
-            throw new Error(errorText || 'Failed to start batch discovery');
-        }
-
-        const startResult = await startResponse.json();
-        
-        // Check if already complete (all feeds discovered)
-        if (startResult.status === 'complete') {
-            window.showToast(startResult.message || store.i18n.t('noFriendLinksFound'), 'info');
-            isDiscoveringAll.value = false;
-            return;
-        }
-
-        discoveryProgress.value.total = startResult.total || 0;
-
-        // Start polling for progress
-        pollInterval = setInterval(async () => {
-            try {
-                const progressResponse = await fetch('/api/feeds/discover-all/progress');
-                if (!progressResponse.ok) {
-                    throw new Error('Failed to get progress');
-                }
-
-                const state = await progressResponse.json();
-                console.log('Batch progress state:', state);
-
-                // Update progress display
-                if (state.progress) {
-                    const progress = state.progress;
-                    discoveryProgress.value = {
-                        message: progress.message || store.i18n.t('processingFeed', { current: progress.current || 0, total: progress.total || 0 }),
-                        detail: progress.feed_name || (progress.detail ? getHostname(progress.detail) : ''),
-                        current: progress.current || 0,
-                        total: progress.total || 0,
-                        feedName: progress.feed_name || '',
-                        foundCount: progress.found_count || 0
-                    };
-                }
-
-                // Check if complete
-                if (state.is_complete) {
-                    clearInterval(pollInterval);
-                    pollInterval = null;
-
-                    // Refresh feeds to show updated discovery status
-                    await store.fetchFeeds();
-
-                    if (state.error) {
-                        window.showToast(store.i18n.t('discoveryFailed') + ': ' + state.error, 'error');
-                    } else if (state.feeds && state.feeds.length > 0) {
-                        window.showToast(
-                            store.i18n.t('discoveryComplete') + ': ' + 
-                            store.i18n.t('foundFeeds', { count: state.feeds.length }),
-                            'success'
-                        );
-                    } else {
-                        window.showToast(store.i18n.t('noFriendLinksFound'), 'info');
-                    }
-
-                    isDiscoveringAll.value = false;
-                    discoveryProgress.value = { message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
-
-                    // Clear the discovery state
-                    await fetch('/api/feeds/discover-all/clear', { method: 'POST' });
-                }
-            } catch (pollError) {
-                console.error('Polling error:', pollError);
-                // Don't stop polling on transient errors
-            }
-        }, 500); // Poll every 500ms
-
-    } catch (error) {
-        console.error('Discovery error:', error);
-        window.showToast(store.i18n.t('discoveryFailed'), 'error');
-        isDiscoveringAll.value = false;
-        discoveryProgress.value = { message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
-    }
+function handleDiscoverAll() {
+    emit('discover-all');
 }
 
 function handleAddFeed() {
@@ -176,16 +70,6 @@ function getFavicon(url) {
         return '';
     }
 }
-
-// Cleanup on unmount
-onUnmounted(() => {
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-    }
-    // Clear discovery state on server
-    fetch('/api/feeds/discover-all/clear', { method: 'POST' }).catch(() => {});
-});
 </script>
 
 <template>
@@ -205,40 +89,14 @@ onUnmounted(() => {
                 </button>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <button @click="handleDiscoverAll" :disabled="isDiscoveringAll" 
-                        :class="['btn-primary flex-1 justify-center text-sm sm:text-base', isDiscoveringAll && 'opacity-50 cursor-not-allowed']">
-                    <PhCircleNotch v-if="isDiscoveringAll" :size="18" class="sm:w-5 sm:h-5 animate-spin" />
-                    <PhMagnifyingGlass v-else :size="18" class="sm:w-5 sm:h-5" />
-                    {{ isDiscoveringAll ? store.i18n.t('discoveringAllFeeds') : store.i18n.t('discoverAllFeeds') }}
+                <button @click="handleDiscoverAll" class="btn-primary flex-1 justify-center text-sm sm:text-base">
+                    <PhMagnifyingGlass :size="18" class="sm:w-5 sm:h-5" />
+                    {{ store.i18n.t('discoverAllFeeds') }}
                 </button>
             </div>
-            <p v-if="!isDiscoveringAll" class="text-xs text-text-secondary mb-2">
+            <p class="text-xs text-text-secondary mb-2">
                 {{ store.i18n.t('discoverAllFeedsDesc') }}
             </p>
-            <div v-if="isDiscoveringAll" class="bg-gradient-to-r from-accent/10 to-accent/5 border-l-4 border-accent rounded-lg p-4 mb-2 space-y-2">
-                <div class="flex items-center gap-2">
-                    <PhCircleNotch :size="20" class="animate-spin text-accent shrink-0" />
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-accent">
-                            {{ discoveryProgress.message }}
-                        </p>
-                        <p v-if="discoveryProgress.detail" class="text-xs text-text-secondary mt-1 truncate">
-                            {{ discoveryProgress.detail }}
-                        </p>
-                    </div>
-                </div>
-                <div v-if="discoveryProgress.total > 0" class="w-full bg-bg-tertiary rounded-full h-1.5 overflow-hidden">
-                    <div class="bg-accent h-full transition-all duration-300" :style="{ width: (discoveryProgress.current / discoveryProgress.total * 100) + '%' }"></div>
-                </div>
-                <div class="flex items-center justify-between text-xs text-text-tertiary pt-2 border-t border-accent/20">
-                    <div class="flex items-center gap-2">
-                        <PhRss :size="12" />
-                        <span v-if="discoveryProgress.total > 0">{{ discoveryProgress.current }}/{{ discoveryProgress.total }}</span>
-                        <span v-else>{{ store.i18n.t('pleaseWait') }}</span>
-                    </div>
-                    <span v-if="discoveryProgress.foundCount > 0">{{ store.i18n.t('foundSoFar', { count: discoveryProgress.foundCount }) }}</span>
-                </div>
-            </div>
             <div class="flex">
                 <button @click="handleCleanupDatabase" class="btn-danger flex-1 justify-center text-sm sm:text-base">
                     <PhBroom :size="18" class="sm:w-5 sm:h-5" /> {{ store.i18n.t('cleanDatabase') }}

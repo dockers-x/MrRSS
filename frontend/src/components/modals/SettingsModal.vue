@@ -4,10 +4,12 @@ import { ref, onMounted } from 'vue';
 import GeneralTab from './settings/GeneralTab.vue';
 import FeedsTab from './settings/FeedsTab.vue';
 import AboutTab from './settings/AboutTab.vue';
+import DiscoverAllFeedsModal from './DiscoverAllFeedsModal.vue';
 import { PhGear } from "@phosphor-icons/vue";
 
 const emit = defineEmits(['close']);
 const activeTab = ref('general');
+const showDiscoverAllModal = ref(false);
 
 const settings = ref({
     update_interval: 10,
@@ -193,6 +195,10 @@ async function handleBatchMove(selectedIds) {
     window.showToast(store.i18n.t('feedsMovedSuccess'), 'success');
 }
 
+function handleDiscoverAll() {
+    showDiscoverAllModal.value = true;
+}
+
 // About tab event handlers
 async function handleCheckUpdates() {
     checkingUpdates.value = true;
@@ -347,6 +353,7 @@ async function handleDownloadInstallUpdate() {
                     @delete-feed="handleDeleteFeed"
                     @batch-delete="handleBatchDelete"
                     @batch-move="handleBatchMove"
+                    @discover-all="handleDiscoverAll"
                 />
                 
                 <AboutTab 
@@ -361,6 +368,12 @@ async function handleDownloadInstallUpdate() {
                 />
             </div>
         </div>
+        
+        <!-- Discover All Feeds Modal -->
+        <DiscoverAllFeedsModal 
+            :show="showDiscoverAllModal"
+            @close="showDiscoverAllModal = false"
+        />
     </div>
 </template>
 
