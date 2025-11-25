@@ -97,3 +97,55 @@ func TestDiscoverFromFeedWithTimeout(t *testing.T) {
 		t.Log("Expected error for non-existent feed, but got none (this is acceptable)")
 	}
 }
+
+func TestProgressCallbackCalled(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network test in short mode")
+	}
+
+	service := NewService()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	progressCalled := false
+	progressCb := func(progress Progress) {
+		progressCalled = true
+		// Verify progress has expected fields
+		if progress.Stage == "" {
+			t.Error("Progress stage should not be empty")
+		}
+	}
+
+	// Test with a non-existent feed URL - progress callback should still be called
+	_, _ = service.DiscoverFromFeedWithProgress(ctx, "https://nonexistent-feed-url-12345.com/feed", progressCb)
+	
+	if !progressCalled {
+		t.Error("Progress callback should have been called at least once")
+	}
+}
+
+func TestProgressStructFields(t *testing.T) {
+	// Test that Progress struct can hold all expected fields
+	p := Progress{
+		Stage:      "checking_rss",
+		Message:    "Checking RSS feed",
+		Detail:     "https://example.com",
+		Current:    5,
+		Total:      10,
+		FeedName:   "Test Feed",
+		FoundCount: 3,
+	}
+
+	if p.Stage != "checking_rss" {
+		t.Errorf("Expected stage 'checking_rss', got %q", p.Stage)
+	}
+	if p.Current != 5 {
+		t.Errorf("Expected current 5, got %d", p.Current)
+	}
+	if p.Total != 10 {
+		t.Errorf("Expected total 10, got %d", p.Total)
+	}
+	if p.FoundCount != 3 {
+		t.Errorf("Expected found_count 3, got %d", p.FoundCount)
+	}
+}

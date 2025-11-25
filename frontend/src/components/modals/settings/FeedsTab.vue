@@ -1,6 +1,6 @@
 <script setup>
 import { store } from '../../../store.js';
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { 
     PhHardDrives, PhUpload, PhDownload, PhBroom, PhRss, PhPlus, 
     PhTrash, PhFolder, PhPencil, PhMagnifyingGlass, PhCircleNotch
@@ -10,7 +10,8 @@ const emit = defineEmits(['import-opml', 'export-opml', 'cleanup-database', 'add
 
 const selectedFeeds = ref([]);
 const isDiscoveringAll = ref(false);
-const discoveryProgress = ref({ message: '', detail: '' });
+const discoveryProgress = ref({ message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 });
+let eventSource = null;
 
 const isAllSelected = computed(() => {
     return store.feeds && store.feeds.length > 0 && selectedFeeds.value.length === store.feeds.length;
@@ -37,58 +38,127 @@ function handleCleanupDatabase() {
     emit('cleanup-database');
 }
 
+function getHostname(url) {
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return url;
+    }
+}
+
 async function handleDiscoverAll() {
     isDiscoveringAll.value = true;
-    discoveryProgress.value = { message: store.i18n.t('preparingDiscovery'), detail: '' };
+    discoveryProgress.value = { message: store.i18n.t('preparingDiscovery'), detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
     
+    // Close any existing event source
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
+
     try {
-        // Simulate progress updates
-        const progressSteps = [
-            { delay: 500, message: store.i18n.t('loadingFeeds'), detail: '' },
-            { delay: 2000, message: store.i18n.t('analyzingFeeds'), detail: store.i18n.t('scanningFriendLinks') },
-            { delay: 4000, message: store.i18n.t('checkingFeeds'), detail: store.i18n.t('validatingRSS') },
-        ];
-        
-        let currentStep = 0;
-        const progressInterval = setInterval(() => {
-            if (currentStep < progressSteps.length) {
-                discoveryProgress.value = progressSteps[currentStep];
-                currentStep++;
+        // Use SSE endpoint for real-time progress
+        eventSource = new EventSource('/api/feeds/discover-all-sse');
+
+        eventSource.addEventListener('progress', (event) => {
+            const progress = JSON.parse(event.data);
+            console.log('Batch progress:', progress);
+            
+            // Update progress based on stage
+            switch (progress.stage) {
+                case 'starting':
+                    discoveryProgress.value = {
+                        message: store.i18n.t('preparingDiscovery'),
+                        detail: '',
+                        current: 0,
+                        total: progress.total,
+                        feedName: '',
+                        foundCount: 0
+                    };
+                    break;
+                case 'processing_feed':
+                    discoveryProgress.value = {
+                        message: store.i18n.t('processingFeed', { current: progress.current, total: progress.total }),
+                        detail: progress.feed_name || progress.detail,
+                        current: progress.current,
+                        total: progress.total,
+                        feedName: progress.feed_name,
+                        foundCount: progress.found_count || 0
+                    };
+                    break;
+                case 'fetching_homepage':
+                case 'finding_friend_links':
+                case 'fetching_friend_page':
+                case 'checking_rss':
+                    discoveryProgress.value = {
+                        message: store.i18n.t('processingFeed', { current: progress.current, total: progress.total }),
+                        detail: progress.feed_name + (progress.detail ? ' - ' + getHostname(progress.detail) : ''),
+                        current: progress.current,
+                        total: progress.total,
+                        feedName: progress.feed_name,
+                        foundCount: progress.found_count || 0
+                    };
+                    break;
+                default:
+                    discoveryProgress.value = {
+                        message: progress.message || store.i18n.t('discovering'),
+                        detail: progress.detail || progress.feed_name || '',
+                        current: progress.current || discoveryProgress.value.current,
+                        total: progress.total || discoveryProgress.value.total,
+                        feedName: progress.feed_name || discoveryProgress.value.feedName,
+                        foundCount: progress.found_count || discoveryProgress.value.foundCount
+                    };
             }
-        }, 2000);
-        
-        const response = await fetch('/api/feeds/discover-all', {
-            method: 'POST'
         });
 
-        clearInterval(progressInterval);
-        
-        if (!response.ok) {
-            throw new Error('Failed to discover feeds');
-        }
+        eventSource.addEventListener('complete', async (event) => {
+            const result = JSON.parse(event.data);
+            console.log('Batch discovery complete:', result);
+            
+            // Refresh feeds to show updated discovery status
+            await store.fetchFeeds();
+            
+            if (result.feeds_found > 0) {
+                window.showToast(
+                    store.i18n.t('discoveryComplete') + ': ' + 
+                    store.i18n.t('foundFeeds', { count: result.feeds_found }),
+                    'success'
+                );
+            } else {
+                window.showToast(store.i18n.t('noFriendLinksFound'), 'info');
+            }
+            
+            isDiscoveringAll.value = false;
+            discoveryProgress.value = { message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
+            eventSource.close();
+            eventSource = null;
+        });
 
-        const result = await response.json();
-        
-        // Refresh feeds to show updated discovery status
-        await store.fetchFeeds();
-        
-        if (result.feeds_found > 0) {
-            window.showToast(
-                store.i18n.t('discoveryComplete') + ': ' + 
-                store.i18n.t('foundFeeds', { count: result.feeds_found }) +
-                ' ' + store.i18n.t('fromFeed') + ' ' + result.discovered_from + ' ' +
-                store.i18n.t('feeds'),
-                'success'
-            );
-        } else {
-            window.showToast(store.i18n.t('noFriendLinksFound'), 'info');
-        }
+        eventSource.addEventListener('error', async (event) => {
+            if (event.data) {
+                const error = JSON.parse(event.data);
+                console.error('Batch discovery error:', error);
+                window.showToast(store.i18n.t('discoveryFailed') + ': ' + (error.message || 'Unknown error'), 'error');
+            } else {
+                console.error('EventSource error:', event);
+                if (isDiscoveringAll.value) {
+                    window.showToast(store.i18n.t('discoveryFailed'), 'error');
+                }
+            }
+            isDiscoveringAll.value = false;
+            discoveryProgress.value = { message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
+            eventSource.close();
+            eventSource = null;
+            
+            // Refresh feeds anyway
+            await store.fetchFeeds();
+        });
+
     } catch (error) {
         console.error('Discovery error:', error);
         window.showToast(store.i18n.t('discoveryFailed'), 'error');
-    } finally {
         isDiscoveringAll.value = false;
-        discoveryProgress.value = { message: '', detail: '' };
+        discoveryProgress.value = { message: '', detail: '', current: 0, total: 0, feedName: '', foundCount: 0 };
     }
 }
 
@@ -123,6 +193,14 @@ function getFavicon(url) {
         return '';
     }
 }
+
+// Cleanup on unmount
+onUnmounted(() => {
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
+});
 </script>
 
 <template>
@@ -159,14 +237,21 @@ function getFavicon(url) {
                         <p class="text-sm font-semibold text-accent">
                             {{ discoveryProgress.message }}
                         </p>
-                        <p v-if="discoveryProgress.detail" class="text-xs text-text-secondary mt-1">
+                        <p v-if="discoveryProgress.detail" class="text-xs text-text-secondary mt-1 truncate">
                             {{ discoveryProgress.detail }}
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 text-xs text-text-tertiary pt-2 border-t border-accent/20">
-                    <PhRss :size="12" />
-                    <span>{{ store.i18n.t('pleaseWait') }}</span>
+                <div v-if="discoveryProgress.total > 0" class="w-full bg-bg-tertiary rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-accent h-full transition-all duration-300" :style="{ width: (discoveryProgress.current / discoveryProgress.total * 100) + '%' }"></div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-text-tertiary pt-2 border-t border-accent/20">
+                    <div class="flex items-center gap-2">
+                        <PhRss :size="12" />
+                        <span v-if="discoveryProgress.total > 0">{{ discoveryProgress.current }}/{{ discoveryProgress.total }}</span>
+                        <span v-else>{{ store.i18n.t('pleaseWait') }}</span>
+                    </div>
+                    <span v-if="discoveryProgress.foundCount > 0">{{ store.i18n.t('foundSoFar', { count: discoveryProgress.foundCount }) }}</span>
                 </div>
             </div>
             <div class="flex">

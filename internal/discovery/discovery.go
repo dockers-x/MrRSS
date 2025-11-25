@@ -16,6 +16,20 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
+// ProgressCallback is called with progress updates during discovery
+type ProgressCallback func(progress Progress)
+
+// Progress represents the current discovery progress
+type Progress struct {
+	Stage       string `json:"stage"`        // Current stage (e.g., "fetching_homepage", "finding_friend_links", "checking_rss")
+	Message     string `json:"message"`      // Human-readable message
+	Detail      string `json:"detail"`       // Additional detail (e.g., current URL being checked)
+	Current     int    `json:"current"`      // Current item index
+	Total       int    `json:"total"`        // Total items to process
+	FeedName    string `json:"feed_name"`    // Name of the feed being processed (for batch discovery)
+	FoundCount  int    `json:"found_count"`  // Number of feeds found so far
+}
+
 // DiscoveredBlog represents a blog found through friend links
 type DiscoveredBlog struct {
 	Name           string          `json:"name"`
@@ -55,14 +69,37 @@ func NewService() *Service {
 
 // DiscoverFromFeed discovers blogs from a feed's homepage
 func (s *Service) DiscoverFromFeed(ctx context.Context, feedURL string) ([]DiscoveredBlog, error) {
+	return s.DiscoverFromFeedWithProgress(ctx, feedURL, nil)
+}
+
+// DiscoverFromFeedWithProgress discovers blogs from a feed's homepage with progress updates
+func (s *Service) DiscoverFromFeedWithProgress(ctx context.Context, feedURL string, progressCb ProgressCallback) ([]DiscoveredBlog, error) {
+	// Report progress: fetching homepage
+	if progressCb != nil {
+		progressCb(Progress{
+			Stage:   "fetching_homepage",
+			Message: "Fetching homepage from feed",
+			Detail:  feedURL,
+		})
+	}
+
 	// First, try to parse the feed to get the homepage link
 	homepage, err := s.getFeedHomepage(ctx, feedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get homepage from feed: %w", err)
 	}
 
+	// Report progress: finding friend links
+	if progressCb != nil {
+		progressCb(Progress{
+			Stage:   "finding_friend_links",
+			Message: "Searching for friend links",
+			Detail:  homepage,
+		})
+	}
+
 	// Fetch the homepage HTML
-	friendLinks, err := s.findFriendLinks(ctx, homepage)
+	friendLinks, err := s.findFriendLinksWithProgress(ctx, homepage, progressCb)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find friend links: %w", err)
 	}
@@ -71,8 +108,17 @@ func (s *Service) DiscoverFromFeed(ctx context.Context, feedURL string) ([]Disco
 		return []DiscoveredBlog{}, nil
 	}
 
+	// Report progress: checking RSS feeds
+	if progressCb != nil {
+		progressCb(Progress{
+			Stage:   "checking_rss",
+			Message: "Checking RSS feeds",
+			Total:   len(friendLinks),
+		})
+	}
+
 	// Discover RSS feeds from friend links (concurrent)
-	discovered := s.discoverRSSFeeds(ctx, friendLinks)
+	discovered := s.discoverRSSFeedsWithProgress(ctx, friendLinks, progressCb)
 
 	return discovered, nil
 }
@@ -99,11 +145,24 @@ func (s *Service) getFeedHomepage(ctx context.Context, feedURL string) (string, 
 
 // findFriendLinks searches for friend link pages and extracts links
 func (s *Service) findFriendLinks(ctx context.Context, homepage string) ([]string, error) {
+	return s.findFriendLinksWithProgress(ctx, homepage, nil)
+}
+
+// findFriendLinksWithProgress searches for friend link pages with progress updates
+func (s *Service) findFriendLinksWithProgress(ctx context.Context, homepage string, progressCb ProgressCallback) ([]string, error) {
 	// Try to find friend link page
 	friendPageURL, err := s.findFriendLinkPage(ctx, homepage)
 	if err != nil {
 		log.Printf("Could not find friend link page, trying homepage: %v", err)
 		friendPageURL = homepage
+	}
+
+	if progressCb != nil {
+		progressCb(Progress{
+			Stage:   "fetching_friend_page",
+			Message: "Fetching friend links page",
+			Detail:  friendPageURL,
+		})
 	}
 
 	// Fetch and parse the friend link page
@@ -115,6 +174,14 @@ func (s *Service) findFriendLinks(ctx context.Context, homepage string) ([]strin
 	// Extract all external links
 	links := s.extractExternalLinks(doc, friendPageURL)
 
+	if progressCb != nil {
+		progressCb(Progress{
+			Stage:   "found_links",
+			Message: fmt.Sprintf("Found %d potential blog links", len(links)),
+			Total:   len(links),
+		})
+	}
+
 	return links, nil
 }
 
@@ -125,10 +192,17 @@ func (s *Service) findFriendLinkPage(ctx context.Context, homepage string) (stri
 		return "", err
 	}
 
-	// Common patterns for friend link pages (multiple languages)
+	// Expanded patterns for friend link pages (multiple languages and variations)
 	patterns := []string{
-		"友链", "友情链接", "blogroll", "friends", "links",
-		"link", "buddy", "partner", "about/links", "friends.html",
+		// Chinese patterns
+		"友链", "友情链接", "博客友链", "友情", "朋友们", "小伙伴", "友邻", "链接",
+		// English patterns
+		"blogroll", "friends", "links", "friend links", "blog links",
+		"link", "buddy", "buddies", "partner", "partners", "bloggers",
+		"recommended", "blog roll", "favorite blogs", "other blogs",
+		// Common URL paths
+		"about/links", "friends.html", "links.html", "blogroll.html",
+		"friend", "flink", "link-exchange",
 	}
 
 	var foundURL string
@@ -267,9 +341,20 @@ func (s *Service) resolveURL(base, href string) string {
 
 // discoverRSSFeeds discovers RSS feeds from a list of blog URLs
 func (s *Service) discoverRSSFeeds(ctx context.Context, blogURLs []string) []DiscoveredBlog {
+	return s.discoverRSSFeedsWithProgress(ctx, blogURLs, nil)
+}
+
+// discoverRSSFeedsWithProgress discovers RSS feeds with progress updates
+func (s *Service) discoverRSSFeedsWithProgress(ctx context.Context, blogURLs []string, progressCb ProgressCallback) []DiscoveredBlog {
 	var wg sync.WaitGroup
 	results := make(chan DiscoveredBlog, len(blogURLs))
-	sem := make(chan struct{}, 10) // Limit concurrency to 10
+	sem := make(chan struct{}, 15) // Increased concurrency from 10 to 15
+
+	// Track progress
+	var progressMu sync.Mutex
+	processed := 0
+	foundCount := 0
+	total := len(blogURLs)
 
 	for _, blogURL := range blogURLs {
 		select {
@@ -285,7 +370,28 @@ func (s *Service) discoverRSSFeeds(ctx context.Context, blogURLs []string) []Dis
 			defer wg.Done()
 			defer func() { <-sem }()
 
+			// Report progress
+			if progressCb != nil {
+				progressMu.Lock()
+				processed++
+				currentProcessed := processed
+				currentFound := foundCount
+				progressMu.Unlock()
+
+				progressCb(Progress{
+					Stage:      "checking_rss",
+					Message:    "Checking RSS feed",
+					Detail:     u,
+					Current:    currentProcessed,
+					Total:      total,
+					FoundCount: currentFound,
+				})
+			}
+
 			if blog, err := s.discoverBlogRSS(ctx, u); err == nil {
+				progressMu.Lock()
+				foundCount++
+				progressMu.Unlock()
 				results <- blog
 			}
 		}(blogURL)
@@ -355,7 +461,25 @@ func (s *Service) findRSSFeed(ctx context.Context, blogURL string) (string, erro
 
 	baseURL := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 
-	// Common RSS/Atom feed paths
+	// First, try to parse HTML and find RSS link in <head> - this is usually the most reliable
+	doc, err := s.fetchHTML(ctx, blogURL)
+	if err == nil {
+		var foundFeed string
+		doc.Find("link[type='application/rss+xml'], link[type='application/atom+xml'], link[rel='alternate'][type*='xml']").Each(func(i int, sel *goquery.Selection) {
+			if foundFeed != "" {
+				return
+			}
+			if href, exists := sel.Attr("href"); exists {
+				foundFeed = s.resolveURL(blogURL, href)
+			}
+		})
+
+		if foundFeed != "" && s.isValidFeed(ctx, foundFeed) {
+			return foundFeed, nil
+		}
+	}
+
+	// Expanded common RSS/Atom feed paths
 	commonPaths := []string{
 		"/rss.xml",
 		"/feed.xml",
@@ -365,34 +489,55 @@ func (s *Service) findRSSFeed(ctx context.Context, blogURL string) (string, erro
 		"/feeds/posts/default", // Blogger
 		"/index.xml",           // Hugo
 		"/feed/",
+		"/rss/",
+		"/atom/",
+		"/blog/feed",
+		"/blog/rss",
+		"/blog/feed.xml",
+		"/blog/rss.xml",
+		"/posts/feed",
+		"/posts/rss.xml",
+		"/?feed=rss2",  // WordPress
+		"/feed/?type=rss", // Some WordPress
+		"/rss2.xml",
+		"/feed.atom",
+		"/feed.rss",
 	}
 
-	// Try common paths first
+	// Try common paths concurrently for faster discovery
+	type feedResult struct {
+		url   string
+		valid bool
+	}
+	resultCh := make(chan feedResult, len(commonPaths))
+
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 5) // Limit concurrent checks
+
 	for _, path := range commonPaths {
 		feedURL := baseURL + path
-		if s.isValidFeed(ctx, feedURL) {
-			return feedURL, nil
-		}
+		wg.Add(1)
+		go func(fURL string) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+			
+			if s.isValidFeed(ctx, fURL) {
+				resultCh <- feedResult{url: fURL, valid: true}
+			}
+		}(feedURL)
 	}
 
-	// Try to parse HTML and find RSS link in <head>
-	doc, err := s.fetchHTML(ctx, blogURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch blog page: %w", err)
-	}
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
 
-	var foundFeed string
-	doc.Find("link[type='application/rss+xml'], link[type='application/atom+xml']").Each(func(i int, sel *goquery.Selection) {
-		if foundFeed != "" {
-			return
+	// Return the first valid feed found
+	for result := range resultCh {
+		if result.valid {
+			return result.url, nil
 		}
-		if href, exists := sel.Attr("href"); exists {
-			foundFeed = s.resolveURL(blogURL, href)
-		}
-	})
-
-	if foundFeed != "" && s.isValidFeed(ctx, foundFeed) {
-		return foundFeed, nil
 	}
 
 	return "", fmt.Errorf("RSS feed not found")

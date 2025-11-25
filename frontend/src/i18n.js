@@ -81,6 +81,12 @@ export const translations = {
         analyzingFeeds: 'Analyzing feeds',
         scanningFriendLinks: 'Scanning for friend links',
         validatingRSS: 'Validating RSS feeds',
+        checkingRssFeed: 'Checking RSS feed',
+        processingFeed: 'Processing feed {current} of {total}',
+        foundPotentialLinks: 'Found {count} potential blog links',
+        fetchingFriendPage: 'Fetching friend links page',
+        checkingSite: 'Checking site',
+        foundSoFar: 'Found {count} feeds so far',
         
         // Settings Modal
         settingsTitle: 'Settings',
@@ -315,6 +321,12 @@ export const translations = {
         analyzingFeeds: '正在分析订阅源',
         scanningFriendLinks: '正在扫描友链',
         validatingRSS: '正在验证 RSS 订阅',
+        checkingRssFeed: '正在检查 RSS 订阅',
+        processingFeed: '正在处理第 {current}/{total} 个订阅源',
+        foundPotentialLinks: '找到 {count} 个潜在博客链接',
+        fetchingFriendPage: '正在获取友链页面',
+        checkingSite: '正在检查站点',
+        foundSoFar: '已找到 {count} 个订阅源',
         
         // Settings Modal
         settingsTitle: '设置',

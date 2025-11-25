@@ -1098,6 +1098,94 @@ func (h *Handler) HandleDiscoverBlogs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(filtered)
 }
 
+// HandleDiscoverBlogsSSE discovers blogs from a feed's friend links with SSE progress updates
+func (h *Handler) HandleDiscoverBlogsSSE(w http.ResponseWriter, r *http.Request) {
+	feedIDStr := r.URL.Query().Get("feed_id")
+	if feedIDStr == "" {
+		http.Error(w, "feed_id is required", http.StatusBadRequest)
+		return
+	}
+
+	feedID, err := strconv.ParseInt(feedIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid feed_id", http.StatusBadRequest)
+		return
+	}
+
+	// Set SSE headers
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the specific feed by ID
+	targetFeed, err := h.DB.GetFeedByID(feedID)
+	if err != nil {
+		sendSSEEvent(w, flusher, "error", map[string]string{"message": "Feed not found"})
+		return
+	}
+
+	// Get all existing feed URLs for deduplication
+	subscribedURLs, err := h.DB.GetAllFeedURLs()
+	if err != nil {
+		log.Printf("Error getting subscribed URLs: %v", err)
+		subscribedURLs = make(map[string]bool)
+	}
+
+	// Create a progress callback that sends SSE events
+	progressCb := func(progress discovery.Progress) {
+		sendSSEEvent(w, flusher, "progress", progress)
+	}
+
+	// Discover blogs with timeout and progress updates
+	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
+	defer cancel()
+
+	log.Printf("Starting SSE blog discovery for feed: %s (%s)", targetFeed.Title, targetFeed.URL)
+	discovered, err := h.DiscoveryService.DiscoverFromFeedWithProgress(ctx, targetFeed.URL, progressCb)
+	if err != nil {
+		log.Printf("Error discovering blogs: %v", err)
+		sendSSEEvent(w, flusher, "error", map[string]string{"message": err.Error()})
+		return
+	}
+
+	// Filter out already-subscribed feeds
+	filtered := make([]discovery.DiscoveredBlog, 0)
+	for _, blog := range discovered {
+		if !subscribedURLs[blog.RSSFeed] {
+			filtered = append(filtered, blog)
+		}
+	}
+
+	// Mark the feed as discovered
+	if err := h.DB.MarkFeedDiscovered(feedID); err != nil {
+		log.Printf("Error marking feed as discovered: %v", err)
+	}
+
+	// Send final results
+	sendSSEEvent(w, flusher, "complete", map[string]interface{}{
+		"feeds": filtered,
+		"count": len(filtered),
+	})
+}
+
+// sendSSEEvent sends an SSE event to the client
+func sendSSEEvent(w http.ResponseWriter, flusher http.Flusher, eventType string, data interface{}) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Error marshaling SSE data: %v", err)
+		return
+	}
+	fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, jsonData)
+	flusher.Flush()
+}
+
 // HandleDiscoverAllFeeds discovers feeds from all subscriptions that haven't been discovered yet
 func (h *Handler) HandleDiscoverAllFeeds(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -1183,6 +1271,151 @@ discoveryLoop:
 	log.Printf("Batch discovery complete: discovered %d feeds from %d sources", discoveredCount, len(feedsToDiscover))
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
+		"discovered_from": len(feedsToDiscover),
+		"feeds_found":     discoveredCount,
+		"feeds":           allDiscovered,
+	})
+}
+
+// HandleDiscoverAllFeedsSSE discovers feeds from all subscriptions with SSE progress updates
+func (h *Handler) HandleDiscoverAllFeedsSSE(w http.ResponseWriter, r *http.Request) {
+	// Set SSE headers
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	// Get all feeds
+	feeds, err := h.DB.GetFeeds()
+	if err != nil {
+		sendSSEEvent(w, flusher, "error", map[string]string{"message": err.Error()})
+		return
+	}
+
+	// Get all existing feed URLs for deduplication
+	subscribedURLs, err := h.DB.GetAllFeedURLs()
+	if err != nil {
+		log.Printf("Error getting subscribed URLs: %v", err)
+		subscribedURLs = make(map[string]bool)
+	}
+
+	// Filter feeds that haven't been discovered yet
+	var feedsToDiscover []models.Feed
+	for _, feed := range feeds {
+		if !feed.DiscoveryCompleted {
+			feedsToDiscover = append(feedsToDiscover, feed)
+		}
+	}
+
+	if len(feedsToDiscover) == 0 {
+		sendSSEEvent(w, flusher, "complete", map[string]interface{}{
+			"message":         "All feeds have already been discovered",
+			"discovered_from": 0,
+			"feeds_found":     0,
+			"feeds":           map[string][]discovery.DiscoveredBlog{},
+		})
+		return
+	}
+
+	// Send initial progress
+	sendSSEEvent(w, flusher, "progress", map[string]interface{}{
+		"stage":      "starting",
+		"message":    "Starting batch discovery",
+		"total":      len(feedsToDiscover),
+		"current":    0,
+		"feed_name":  "",
+		"found_count": 0,
+	})
+
+	// Discover feeds with timeout
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+	defer cancel()
+
+	allDiscovered := make(map[string][]discovery.DiscoveredBlog)
+	discoveredCount := 0
+
+	log.Printf("Starting SSE batch discovery for %d feeds", len(feedsToDiscover))
+
+	for i, feed := range feedsToDiscover {
+		select {
+		case <-ctx.Done():
+			log.Println("Batch discovery cancelled: timeout or client disconnected")
+			sendSSEEvent(w, flusher, "error", map[string]string{"message": "Discovery cancelled"})
+			return
+		default:
+		}
+
+		// Send progress update for current feed
+		sendSSEEvent(w, flusher, "progress", map[string]interface{}{
+			"stage":       "processing_feed",
+			"message":     fmt.Sprintf("Processing feed %d of %d", i+1, len(feedsToDiscover)),
+			"detail":      feed.Title,
+			"total":       len(feedsToDiscover),
+			"current":     i + 1,
+			"feed_name":   feed.Title,
+			"found_count": discoveredCount,
+		})
+
+		log.Printf("Discovering from feed: %s (%s)", feed.Title, feed.URL)
+
+		// Create a per-feed progress callback
+		feedProgressCb := func(progress discovery.Progress) {
+			progress.FeedName = feed.Title
+			progress.FoundCount = discoveredCount
+			sendSSEEvent(w, flusher, "progress", map[string]interface{}{
+				"stage":       progress.Stage,
+				"message":     progress.Message,
+				"detail":      progress.Detail,
+				"total":       len(feedsToDiscover),
+				"current":     i + 1,
+				"feed_name":   feed.Title,
+				"found_count": discoveredCount,
+				"sub_current": progress.Current,
+				"sub_total":   progress.Total,
+			})
+		}
+
+		discovered, err := h.DiscoveryService.DiscoverFromFeedWithProgress(ctx, feed.URL, feedProgressCb)
+		if err != nil {
+			log.Printf("Error discovering from feed %s: %v", feed.Title, err)
+			// Continue to next feed instead of stopping
+			if err := h.DB.MarkFeedDiscovered(feed.ID); err != nil {
+				log.Printf("Error marking feed as discovered: %v", err)
+			}
+			continue
+		}
+
+		// Filter out already-subscribed feeds
+		filtered := make([]discovery.DiscoveredBlog, 0)
+		for _, blog := range discovered {
+			if !subscribedURLs[blog.RSSFeed] {
+				filtered = append(filtered, blog)
+				// Add to subscribed URLs to avoid duplicates across feeds
+				subscribedURLs[blog.RSSFeed] = true
+			}
+		}
+
+		if len(filtered) > 0 {
+			allDiscovered[feed.Title] = filtered
+			discoveredCount += len(filtered)
+		}
+
+		// Mark the feed as discovered
+		if err := h.DB.MarkFeedDiscovered(feed.ID); err != nil {
+			log.Printf("Error marking feed as discovered: %v", err)
+		}
+	}
+
+	log.Printf("Batch discovery complete: discovered %d feeds from %d sources", discoveredCount, len(feedsToDiscover))
+
+	// Send final results
+	sendSSEEvent(w, flusher, "complete", map[string]interface{}{
 		"discovered_from": len(feedsToDiscover),
 		"feeds_found":     discoveredCount,
 		"feeds":           allDiscovered,

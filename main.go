@@ -90,6 +90,8 @@ func main() {
 	apiMux.HandleFunc("/api/feeds/update", h.HandleUpdateFeed)
 	apiMux.HandleFunc("/api/feeds/discover", h.HandleDiscoverBlogs)
 	apiMux.HandleFunc("/api/feeds/discover-all", h.HandleDiscoverAllFeeds)
+	apiMux.HandleFunc("/api/feeds/discover-sse", h.HandleDiscoverBlogsSSE)
+	apiMux.HandleFunc("/api/feeds/discover-all-sse", h.HandleDiscoverAllFeedsSSE)
 	apiMux.HandleFunc("/api/articles", h.HandleArticles)
 	apiMux.HandleFunc("/api/articles/read", h.HandleMarkRead)
 	apiMux.HandleFunc("/api/articles/favorite", h.HandleToggleFavorite)

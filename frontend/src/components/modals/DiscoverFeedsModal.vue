@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { store } from '../../store.js';
 import { PhX, PhCheck, PhGlobe, PhRss, PhCircleNotch } from "@phosphor-icons/vue";
 
@@ -15,63 +15,118 @@ const discoveredFeeds = ref([]);
 const selectedFeeds = ref(new Set());
 const errorMessage = ref('');
 const progressMessage = ref('');
+const progressDetail = ref('');
+const progressCounts = ref({ current: 0, total: 0, found: 0 });
 const isSubscribing = ref(false);
+let eventSource = null;
+
+function getHostname(url) {
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return url;
+    }
+}
 
 async function startDiscovery() {
-    console.log('startDiscovery: Beginning discovery process');
+    console.log('startDiscovery: Beginning SSE discovery process');
     isDiscovering.value = true;
     errorMessage.value = '';
     discoveredFeeds.value = [];
     selectedFeeds.value.clear();
     progressMessage.value = store.i18n.t('fetchingHomepage');
+    progressDetail.value = '';
+    progressCounts.value = { current: 0, total: 0, found: 0 };
+
+    // Close any existing event source
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
 
     try {
-        console.log('startDiscovery: Sending request to /api/feeds/discover with feed_id:', props.feed.id);
-        
-        // Simulate progress updates (since backend doesn't stream progress)
-        const progressSteps = [
-            { delay: 500, message: store.i18n.t('searchingFriendLinks') },
-            { delay: 2000, message: store.i18n.t('analyzingLinks') },
-            { delay: 3000, message: store.i18n.t('checkingFeeds') },
-        ];
-        
-        let currentStep = 0;
-        const progressInterval = setInterval(() => {
-            if (currentStep < progressSteps.length) {
-                progressMessage.value = progressSteps[currentStep].message;
-                currentStep++;
+        // Use SSE endpoint for real-time progress
+        eventSource = new EventSource(`/api/feeds/discover-sse?feed_id=${props.feed.id}`);
+
+        eventSource.addEventListener('progress', (event) => {
+            const progress = JSON.parse(event.data);
+            console.log('Progress:', progress);
+            
+            // Update progress message based on stage
+            switch (progress.stage) {
+                case 'fetching_homepage':
+                    progressMessage.value = store.i18n.t('fetchingHomepage');
+                    progressDetail.value = getHostname(progress.detail);
+                    break;
+                case 'finding_friend_links':
+                    progressMessage.value = store.i18n.t('searchingFriendLinks');
+                    progressDetail.value = getHostname(progress.detail);
+                    break;
+                case 'fetching_friend_page':
+                    progressMessage.value = store.i18n.t('fetchingFriendPage');
+                    progressDetail.value = getHostname(progress.detail);
+                    break;
+                case 'found_links':
+                    progressMessage.value = store.i18n.t('foundPotentialLinks', { count: progress.total });
+                    progressDetail.value = '';
+                    progressCounts.value.total = progress.total;
+                    break;
+                case 'checking_rss':
+                    progressMessage.value = store.i18n.t('checkingRssFeed');
+                    progressDetail.value = getHostname(progress.detail);
+                    progressCounts.value.current = progress.current || 0;
+                    progressCounts.value.total = progress.total || 0;
+                    progressCounts.value.found = progress.found_count || 0;
+                    break;
+                default:
+                    progressMessage.value = progress.message || store.i18n.t('discovering');
+                    progressDetail.value = progress.detail ? getHostname(progress.detail) : '';
             }
-        }, 1500);
-        
-        const response = await fetch('/api/feeds/discover', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ feed_id: props.feed.id })
         });
 
-        clearInterval(progressInterval);
-        
-        console.log('startDiscovery: Response status:', response.status);
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('startDiscovery: Error response:', errorText);
-            throw new Error(errorText || 'Failed to discover feeds');
-        }
+        eventSource.addEventListener('complete', (event) => {
+            const result = JSON.parse(event.data);
+            console.log('Discovery complete:', result);
+            
+            discoveredFeeds.value = result.feeds || [];
+            
+            if (discoveredFeeds.value.length === 0) {
+                errorMessage.value = store.i18n.t('noFriendLinksFound');
+            }
+            
+            isDiscovering.value = false;
+            progressMessage.value = '';
+            progressDetail.value = '';
+            eventSource.close();
+            eventSource = null;
+        });
 
-        const feeds = await response.json();
-        console.log('startDiscovery: Received feeds:', feeds);
-        discoveredFeeds.value = feeds || [];
+        eventSource.addEventListener('error', (event) => {
+            // Check if it's a connection error or an error event from server
+            if (event.data) {
+                const error = JSON.parse(event.data);
+                console.error('Discovery error:', error);
+                errorMessage.value = store.i18n.t('discoveryFailed') + ': ' + (error.message || 'Unknown error');
+            } else {
+                console.error('EventSource error:', event);
+                // Only show error if we're still discovering (not if SSE just closed)
+                if (isDiscovering.value) {
+                    errorMessage.value = store.i18n.t('discoveryFailed');
+                }
+            }
+            isDiscovering.value = false;
+            progressMessage.value = '';
+            progressDetail.value = '';
+            eventSource.close();
+            eventSource = null;
+        });
 
-        if (discoveredFeeds.value.length === 0) {
-            errorMessage.value = store.i18n.t('noFriendLinksFound');
-        }
     } catch (error) {
         console.error('Discovery error:', error);
         errorMessage.value = store.i18n.t('discoveryFailed') + ': ' + error.message;
-    } finally {
-        console.log('startDiscovery: Discovery completed, isDiscovering set to false');
         isDiscovering.value = false;
         progressMessage.value = '';
+        progressDetail.value = '';
     }
 }
 
@@ -136,6 +191,11 @@ async function subscribeSelected() {
 }
 
 function close() {
+    // Close SSE connection if active
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
     emit('close');
 }
 
@@ -154,6 +214,14 @@ watch(() => props.show, (newShow, oldShow) => {
     if (newShow && !oldShow) {
         console.log('DiscoverFeedsModal: Starting discovery from watch');
         startDiscovery();
+    }
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
     }
 });
 </script>
@@ -179,6 +247,11 @@ watch(() => props.show, (newShow, oldShow) => {
                     <PhCircleNotch :size="48" class="text-accent animate-spin mb-4" />
                     <p class="text-text-primary font-medium mb-2">{{ store.i18n.t('discovering') }}</p>
                     <p v-if="progressMessage" class="text-sm text-text-secondary">{{ progressMessage }}</p>
+                    <p v-if="progressDetail" class="text-xs text-text-tertiary mt-1 font-mono">{{ progressDetail }}</p>
+                    <div v-if="progressCounts.total > 0" class="mt-3 text-xs text-text-tertiary">
+                        <span>{{ progressCounts.current }}/{{ progressCounts.total }}</span>
+                        <span v-if="progressCounts.found > 0" class="ml-2">• {{ store.i18n.t('foundSoFar', { count: progressCounts.found }) }}</span>
+                    </div>
                 </div>
 
                 <!-- Error State -->
