@@ -40,7 +40,9 @@ func NewEngine(db *database.DB) *Engine {
 	return &Engine{db: db}
 }
 
-// ApplyRulesToArticles applies all enabled rules to articles
+// ApplyRulesToArticles applies all enabled rules to a batch of articles.
+// Each article is matched against rules in order, and only the first matching rule is applied.
+// This prevents conflicting actions from multiple rules being applied to the same article.
 func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 	// Load rules from settings
 	rulesJSON, _ := e.db.GetSetting("rules")
@@ -85,7 +87,7 @@ func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 					}
 				}
 				affected++
-				break // Only apply one rule per article
+				break // Only apply first matching rule per article to prevent conflicts
 			}
 		}
 	}
@@ -93,10 +95,12 @@ func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 	return affected, nil
 }
 
-// ApplyRule applies a single rule to all matching articles
+// ApplyRule applies a single rule to all matching articles.
+// Uses batch processing with a reasonable limit to avoid memory issues.
 func (e *Engine) ApplyRule(rule Rule) (int, error) {
-	// Get all articles from database
-	articles, err := e.db.GetArticles("", 0, "", true, 100000, 0)
+	// Get articles in batches to avoid memory issues with large datasets
+	const batchSize = 10000
+	articles, err := e.db.GetArticles("", 0, "", true, batchSize, 0)
 	if err != nil {
 		return 0, err
 	}

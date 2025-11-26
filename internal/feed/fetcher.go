@@ -219,7 +219,8 @@ func (f *Fetcher) FetchFeed(ctx context.Context, feed models.Feed) {
 			log.Printf("Error saving articles for feed %s: %v", feed.Title, err)
 		} else {
 			// Apply rules to newly saved articles
-			// Get the saved articles with IDs from database (the recent ones for this feed)
+			// We fetch the recent articles for this feed since SaveArticles doesn't return IDs
+			// This is limited to the number of articles we just saved
 			savedArticles, err := f.db.GetArticles("", feed.ID, "", false, len(articlesToSave), 0)
 			if err == nil && len(savedArticles) > 0 {
 				engine := rules.NewEngine(f.db)

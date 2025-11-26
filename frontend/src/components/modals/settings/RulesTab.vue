@@ -94,9 +94,10 @@ async function toggleRuleEnabled(rule) {
 
 // Save rule from editor
 async function handleSaveRule(rule) {
-    const isNew = !editingRule.value;
+    // Check if this is a new rule (editingRule is null or has no id)
+    const isNew = !editingRule.value || !editingRule.value.id;
     
-    if (editingRule.value) {
+    if (editingRule.value && editingRule.value.id) {
         // Update existing rule
         const index = rules.value.findIndex(r => r.id === rule.id);
         if (index !== -1) {
