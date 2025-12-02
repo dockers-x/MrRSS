@@ -6,6 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/PuerkitoBio/goquery v1.11.0
+	github.com/go-ego/gse v0.80.3
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/wailsapp/wails/v2 v2.11.0
 	modernc.org/sqlite v1.40.1
@@ -41,6 +42,7 @@ require (
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	github.com/vcaesar/cedar v0.20.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.23 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.45.0 // indirect

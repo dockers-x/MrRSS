@@ -66,6 +66,8 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
           default_view_mode: settings.value.default_view_mode,
           startup_on_boot: settings.value.startup_on_boot.toString(),
           shortcuts: settings.value.shortcuts || '',
+          summary_enabled: settings.value.summary_enabled.toString(),
+          summary_length: settings.value.summary_length || 'medium',
         }),
       });
 
