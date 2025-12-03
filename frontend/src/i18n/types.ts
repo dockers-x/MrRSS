@@ -7,6 +7,7 @@ export interface TranslationMessages {
   allArticles: string;
   unread: string;
   favorites: string;
+  readLater: string;
   uncategorized: string;
   searchFeeds: string;
   addFeed: string;
@@ -26,6 +27,8 @@ export interface TranslationMessages {
   toggleFavorite: string;
   addToFavorite: string;
   removeFromFavorite: string;
+  addToReadLater: string;
+  removeFromReadLater: string;
   openInBrowser: string;
   viewOriginal: string;
   viewContent: string;
@@ -279,6 +282,7 @@ export interface TranslationMessages {
   readStatus: string;
   favoriteStatus: string;
   hiddenStatus: string;
+  readLaterStatus: string;
   yes: string;
   no: string;
   contains: string;
@@ -318,6 +322,8 @@ export interface TranslationMessages {
   goToAllArticles: string;
   goToUnread: string;
   goToFavorites: string;
+  goToReadLater: string;
+  toggleReadLaterStatus: string;
   pressKey: string;
   resetToDefault: string;
   shortcutConflict: string;
@@ -349,6 +355,8 @@ export interface TranslationMessages {
   actionUnhide: string;
   actionMarkRead: string;
   actionMarkUnread: string;
+  actionReadLater: string;
+  actionRemoveReadLater: string;
   addAction: string;
   removeAction: string;
   ruleDeleteConfirmTitle: string;

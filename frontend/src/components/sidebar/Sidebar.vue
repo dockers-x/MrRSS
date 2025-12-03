@@ -67,6 +67,12 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         icon="favorites"
         @click="store.setFilter('favorites')"
       />
+      <SidebarNavItem
+        :label="t('readLater')"
+        :is-active="store.currentFilter === 'readLater'"
+        icon="readLater"
+        @click="store.setFilter('readLater')"
+      />
     </nav>
 
     <!-- Search Box (kept outside scrollable list so it doesn't scroll) -->

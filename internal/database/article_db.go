@@ -11,8 +11,8 @@ import (
 // SaveArticle saves a single article to the database.
 func (db *DB) SaveArticle(article *models.Article) error {
 	db.WaitForReady()
-	query := `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, published_at, translated_title, content, is_read, is_favorite, is_hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := db.Exec(query, article.FeedID, article.Title, article.URL, article.ImageURL, article.PublishedAt, article.TranslatedTitle, article.Content, article.IsRead, article.IsFavorite, article.IsHidden)
+	query := `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, published_at, translated_title, content, is_read, is_favorite, is_hidden, is_read_later) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := db.Exec(query, article.FeedID, article.Title, article.URL, article.ImageURL, article.PublishedAt, article.TranslatedTitle, article.Content, article.IsRead, article.IsFavorite, article.IsHidden, article.IsReadLater)
 	return err
 }
 
@@ -25,7 +25,7 @@ func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) erro
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx, `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, published_at, translated_title, content, is_read, is_favorite, is_hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+	stmt, err := tx.PrepareContext(ctx, `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, published_at, translated_title, content, is_read, is_favorite, is_hidden, is_read_later) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) erro
 		default:
 		}
 
-		_, err := stmt.ExecContext(ctx, article.FeedID, article.Title, article.URL, article.ImageURL, article.PublishedAt, article.TranslatedTitle, article.Content, article.IsRead, article.IsFavorite, article.IsHidden)
+		_, err := stmt.ExecContext(ctx, article.FeedID, article.Title, article.URL, article.ImageURL, article.PublishedAt, article.TranslatedTitle, article.Content, article.IsRead, article.IsFavorite, article.IsHidden, article.IsReadLater)
 		if err != nil {
 			log.Println("Error saving article in batch:", err)
 			// Continue even if one fails
@@ -53,7 +53,7 @@ func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) erro
 func (db *DB) GetArticles(filter string, feedID int64, category string, showHidden bool, limit, offset int) ([]models.Article, error) {
 	db.WaitForReady()
 	baseQuery := `
-		SELECT a.id, a.feed_id, a.title, a.url, a.image_url, a.content, a.published_at, a.is_read, a.is_favorite, a.is_hidden, a.translated_title, f.title
+		SELECT a.id, a.feed_id, a.title, a.url, a.image_url, a.content, a.published_at, a.is_read, a.is_favorite, a.is_hidden, a.is_read_later, a.translated_title, f.title
 		FROM articles a
 		JOIN feeds f ON a.feed_id = f.id
 	`
@@ -74,6 +74,8 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 		}
 	case "favorites":
 		whereClauses = append(whereClauses, "a.is_favorite = 1")
+	case "readLater":
+		whereClauses = append(whereClauses, "a.is_read_later = 1")
 	case "all":
 		// Exclude feeds marked as hide_from_timeline when viewing all articles (unless specific feed/category selected)
 		if feedID <= 0 && category == "" {
@@ -112,7 +114,7 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 	for rows.Next() {
 		var a models.Article
 		var imageURL, content, translatedTitle sql.NullString
-		if err := rows.Scan(&a.ID, &a.FeedID, &a.Title, &a.URL, &imageURL, &content, &a.PublishedAt, &a.IsRead, &a.IsFavorite, &a.IsHidden, &translatedTitle, &a.FeedTitle); err != nil {
+		if err := rows.Scan(&a.ID, &a.FeedID, &a.Title, &a.URL, &imageURL, &content, &a.PublishedAt, &a.IsRead, &a.IsFavorite, &a.IsHidden, &a.IsReadLater, &translatedTitle, &a.FeedTitle); err != nil {
 			log.Println("Error scanning article:", err)
 			continue
 		}
@@ -125,11 +127,15 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 }
 
 // MarkArticleRead marks an article as read or unread.
+// When marking as read, also removes from read later list.
 func (db *DB) MarkArticleRead(id int64, read bool) error {
 	db.WaitForReady()
 	isRead := 0
 	if read {
 		isRead = 1
+		// When marking as read, also remove from read later
+		_, err := db.Exec("UPDATE articles SET is_read = 1, is_read_later = 0 WHERE id = ?", id)
+		return err
 	}
 	_, err := db.Exec("UPDATE articles SET is_read = ? WHERE id = ?", isRead, id)
 	return err
@@ -186,6 +192,39 @@ func (db *DB) ToggleArticleHidden(id int64) error {
 func (db *DB) SetArticleHidden(id int64, hidden bool) error {
 	db.WaitForReady()
 	_, err := db.Exec("UPDATE articles SET is_hidden = ? WHERE id = ?", hidden, id)
+	return err
+}
+
+// ToggleReadLater toggles the read later status of an article.
+// When adding to read later, also marks article as unread.
+func (db *DB) ToggleReadLater(id int64) error {
+	db.WaitForReady()
+	// First get current state
+	var isReadLater bool
+	err := db.QueryRow("SELECT is_read_later FROM articles WHERE id = ?", id).Scan(&isReadLater)
+	if err != nil {
+		return err
+	}
+	newState := !isReadLater
+	// If adding to read later, also mark as unread
+	if newState {
+		_, err = db.Exec("UPDATE articles SET is_read_later = 1, is_read = 0 WHERE id = ?", id)
+	} else {
+		_, err = db.Exec("UPDATE articles SET is_read_later = 0 WHERE id = ?", id)
+	}
+	return err
+}
+
+// SetArticleReadLater sets the read later status of an article.
+// When adding to read later, also marks article as unread.
+func (db *DB) SetArticleReadLater(id int64, readLater bool) error {
+	db.WaitForReady()
+	// If adding to read later, also mark as unread
+	if readLater {
+		_, err := db.Exec("UPDATE articles SET is_read_later = 1, is_read = 0 WHERE id = ?", id)
+		return err
+	}
+	_, err := db.Exec("UPDATE articles SET is_read_later = 0 WHERE id = ?", id)
 	return err
 }
 

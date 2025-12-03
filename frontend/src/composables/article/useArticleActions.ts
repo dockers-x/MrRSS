@@ -37,6 +37,13 @@ export function useArticleActions(
               iconWeight: article.is_favorite ? 'fill' : 'regular',
               iconColor: article.is_favorite ? 'text-yellow-500' : '',
             },
+            {
+              label: article.is_read_later ? t('removeFromReadLater') : t('addToReadLater'),
+              action: 'toggleReadLater',
+              icon: 'ph-clock-countdown',
+              iconWeight: article.is_read_later ? 'fill' : 'regular',
+              iconColor: article.is_read_later ? 'text-blue-500' : '',
+            },
             { separator: true },
             {
               label: contentActionLabel,
@@ -94,6 +101,25 @@ export function useArticleActions(
         console.error('Error toggling favorite:', e);
         // Revert the state change on error
         article.is_favorite = !newState;
+        window.showToast(t('errorSavingSettings'), 'error');
+      }
+    } else if (action === 'toggleReadLater') {
+      const newState = !article.is_read_later;
+      article.is_read_later = newState;
+      // When adding to read later, also mark as unread
+      if (newState) {
+        article.is_read = false;
+      }
+      try {
+        await fetch(`/api/articles/toggle-read-later?id=${article.id}`, { method: 'POST' });
+        // Update unread counts after toggling read later status
+        if (onReadStatusChange) {
+          onReadStatusChange();
+        }
+      } catch (e) {
+        console.error('Error toggling read later:', e);
+        // Revert the state change on error
+        article.is_read_later = !newState;
         window.showToast(t('errorSavingSettings'), 'error');
       }
     } else if (action === 'toggleHide') {

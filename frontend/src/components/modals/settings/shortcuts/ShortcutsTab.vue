@@ -9,6 +9,7 @@ import {
   PhX,
   PhBookOpen,
   PhStar,
+  PhClockCountdown,
   PhArrowSquareOut,
   PhArticle,
   PhArrowClockwise,
@@ -44,6 +45,7 @@ interface Shortcuts {
   closeArticle: string;
   toggleReadStatus: string;
   toggleFavoriteStatus: string;
+  toggleReadLaterStatus: string;
   openInBrowser: string;
   toggleContentView: string;
   refreshFeeds: string;
@@ -54,6 +56,7 @@ interface Shortcuts {
   goToAllArticles: string;
   goToUnread: string;
   goToFavorites: string;
+  goToReadLater: string;
 }
 
 interface ShortcutItemData {
@@ -70,6 +73,7 @@ const defaultShortcuts: Shortcuts = {
   closeArticle: 'Escape',
   toggleReadStatus: 'r',
   toggleFavoriteStatus: 's',
+  toggleReadLaterStatus: 'l',
   openInBrowser: 'o',
   toggleContentView: 'v',
   refreshFeeds: 'Shift+r',
@@ -80,6 +84,7 @@ const defaultShortcuts: Shortcuts = {
   goToAllArticles: '1',
   goToUnread: '2',
   goToFavorites: '3',
+  goToReadLater: '4',
 };
 
 // Current shortcuts (loaded from settings or use defaults)
@@ -101,6 +106,7 @@ const shortcutGroups = computed<Array<{ label: string; items: ShortcutItemData[]
       { key: 'goToAllArticles', label: t('goToAllArticles'), icon: PhListDashes },
       { key: 'goToUnread', label: t('goToUnread'), icon: PhCircle },
       { key: 'goToFavorites', label: t('goToFavorites'), icon: PhHeart },
+      { key: 'goToReadLater', label: t('goToReadLater'), icon: PhClockCountdown },
     ],
   },
   {
@@ -108,6 +114,7 @@ const shortcutGroups = computed<Array<{ label: string; items: ShortcutItemData[]
     items: [
       { key: 'toggleReadStatus', label: t('toggleReadStatus'), icon: PhBookOpen },
       { key: 'toggleFavoriteStatus', label: t('toggleFavoriteStatus'), icon: PhStar },
+      { key: 'toggleReadLaterStatus', label: t('toggleReadLaterStatus'), icon: PhClockCountdown },
       { key: 'openInBrowser', label: t('openInBrowserShortcut'), icon: PhArrowSquareOut },
       { key: 'toggleContentView', label: t('toggleContentView'), icon: PhArticle },
     ],

@@ -6,7 +6,7 @@ import (
 )
 
 // CleanupOldArticles removes articles based on age and status.
-// - Articles older than configured days: delete except favorited
+// - Articles older than configured days: delete except favorited or read later
 // - Also checks database size against max_cache_size_mb setting
 func (db *DB) CleanupOldArticles() (int64, error) {
 	db.WaitForReady()
@@ -22,11 +22,12 @@ func (db *DB) CleanupOldArticles() (int64, error) {
 
 	cutoffDate := time.Now().AddDate(0, 0, -maxAgeDays)
 
-	// Delete articles older than configured age that are not favorited
+	// Delete articles older than configured age that are not favorited or in read later
 	result, err := db.Exec(`
 		DELETE FROM articles
 		WHERE published_at < ?
 		AND is_favorite = 0
+		AND is_read_later = 0
 	`, cutoffDate)
 	if err != nil {
 		return 0, err
@@ -40,7 +41,7 @@ func (db *DB) CleanupOldArticles() (int64, error) {
 	return count, nil
 }
 
-// CleanupUnimportantArticles removes all articles except read and favorited ones.
+// CleanupUnimportantArticles removes all articles except read, favorited, and read later ones.
 func (db *DB) CleanupUnimportantArticles() (int64, error) {
 	db.WaitForReady()
 
@@ -48,6 +49,7 @@ func (db *DB) CleanupUnimportantArticles() (int64, error) {
 		DELETE FROM articles
 		WHERE is_read = 0
 		AND is_favorite = 0
+		AND is_read_later = 0
 	`)
 	if err != nil {
 		return 0, err

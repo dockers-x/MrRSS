@@ -9,6 +9,7 @@ export interface KeyboardShortcuts {
   closeArticle: string;
   toggleReadStatus: string;
   toggleFavoriteStatus: string;
+  toggleReadLaterStatus: string;
   openInBrowser: string;
   toggleContentView: string;
   refreshFeeds: string;
@@ -19,6 +20,7 @@ export interface KeyboardShortcuts {
   goToAllArticles: string;
   goToUnread: string;
   goToFavorites: string;
+  goToReadLater: string;
 }
 
 export interface KeyboardShortcutCallbacks {
@@ -37,6 +39,7 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
     closeArticle: 'Escape',
     toggleReadStatus: 'r',
     toggleFavoriteStatus: 's',
+    toggleReadLaterStatus: 'l',
     openInBrowser: 'o',
     toggleContentView: 'v',
     refreshFeeds: 'Shift+r',
@@ -47,6 +50,7 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
     goToAllArticles: '1',
     goToUnread: '2',
     goToFavorites: '3',
+    goToReadLater: '4',
   });
 
   // Helper functions
@@ -134,6 +138,24 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
     });
   }
 
+  function toggleCurrentArticleReadLater(): void {
+    const article = store.articles.find((a) => a.id === store.currentArticleId);
+    if (!article) return;
+
+    const newState = !article.is_read_later;
+    article.is_read_later = newState;
+    // When adding to read later, also mark as unread
+    if (newState) {
+      article.is_read = false;
+    }
+    fetch(`/api/articles/toggle-read-later?id=${article.id}`, { method: 'POST' })
+      .then(() => store.fetchUnreadCounts())
+      .catch((e) => {
+        console.error('Error toggling read later:', e);
+        article.is_read_later = !newState;
+      });
+  }
+
   function openCurrentArticleInBrowser(): void {
     const article = store.articles.find((a) => a.id === store.currentArticleId);
     if (article && article.url) {
@@ -205,6 +227,9 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
       case 'toggleFavoriteStatus':
         toggleCurrentArticleFavorite();
         break;
+      case 'toggleReadLaterStatus':
+        toggleCurrentArticleReadLater();
+        break;
       case 'openInBrowser':
         openCurrentArticleInBrowser();
         break;
@@ -234,6 +259,9 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
         break;
       case 'goToFavorites':
         store.setFilter('favorites');
+        break;
+      case 'goToReadLater':
+        store.setFilter('readLater');
         break;
     }
   }

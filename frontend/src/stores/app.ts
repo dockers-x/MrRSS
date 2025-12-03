@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, type Ref } from 'vue';
 import type { Article, Feed, UnreadCounts, RefreshProgress } from '@/types/models';
 
-export type Filter = 'all' | 'unread' | 'favorites' | '';
+export type Filter = 'all' | 'unread' | 'favorites' | 'readLater' | '';
 export type ThemePreference = 'light' | 'dark' | 'auto';
 export type Theme = 'light' | 'dark';
 

@@ -7,6 +7,7 @@ import {
   PhEnvelopeOpen,
   PhEnvelope,
   PhStar,
+  PhClockCountdown,
   PhArrowSquareOut,
 } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   close: [];
   'toggle-read': [];
   'toggle-favorite': [];
+  'toggle-read-later': [];
   'toggle-content': [];
   'open-original': [];
 }>();
@@ -59,13 +61,25 @@ const emit = defineEmits<{
       <button
         @click="emit('toggle-favorite')"
         class="btn-icon"
-        :title="article.is_favorite ? t('unfavorite') : t('favorite')"
+        :title="article.is_favorite ? t('removeFromFavorite') : t('addToFavorite')"
       >
         <PhStar
           :size="20"
           :weight="article.is_favorite ? 'fill' : 'regular'"
           class="sm:w-6 sm:h-6"
           :class="{ 'text-yellow-500': article.is_favorite }"
+        />
+      </button>
+      <button
+        @click="emit('toggle-read-later')"
+        class="btn-icon"
+        :title="article.is_read_later ? t('removeFromReadLater') : t('addToReadLater')"
+      >
+        <PhClockCountdown
+          :size="20"
+          :weight="article.is_read_later ? 'fill' : 'regular'"
+          class="sm:w-6 sm:h-6"
+          :class="{ 'text-blue-500': article.is_read_later }"
         />
       </button>
       <button

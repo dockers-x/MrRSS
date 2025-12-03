@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { PhListDashes, PhCircle, PhStar } from '@phosphor-icons/vue';
+import { PhListDashes, PhCircle, PhStar, PhClockCountdown } from '@phosphor-icons/vue';
 import { Component } from 'vue';
 
 interface Props {
   label: string;
   isActive: boolean;
-  icon: 'all' | 'unread' | 'favorites';
+  icon: 'all' | 'unread' | 'favorites' | 'readLater';
   unreadCount?: number;
 }
 
@@ -19,6 +19,7 @@ const iconMap: Record<string, Component> = {
   all: PhListDashes,
   unread: PhCircle,
   favorites: PhStar,
+  readLater: PhClockCountdown,
 };
 </script>
 

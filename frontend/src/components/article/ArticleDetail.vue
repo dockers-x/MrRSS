@@ -15,6 +15,7 @@ const {
   close,
   toggleRead,
   toggleFavorite,
+  toggleReadLater,
   openOriginal,
   toggleContentView,
   closeImageViewer,
@@ -45,6 +46,7 @@ const {
         @toggle-content-view="toggleContentView"
         @toggle-read="toggleRead"
         @toggle-favorite="toggleFavorite"
+        @toggle-read-later="toggleReadLater"
         @open-original="openOriginal"
       />
 

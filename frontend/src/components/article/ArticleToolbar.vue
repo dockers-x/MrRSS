@@ -7,6 +7,7 @@ import {
   PhEnvelopeOpen,
   PhEnvelope,
   PhStar,
+  PhClockCountdown,
   PhArrowSquareOut,
 } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
@@ -61,6 +62,20 @@ defineProps<Props>();
           :size="18"
           class="sm:w-5 sm:h-5"
           :weight="article.is_favorite ? 'fill' : 'regular'"
+        />
+      </button>
+      <button
+        @click="$emit('toggleReadLater')"
+        :class="[
+          'action-btn',
+          article.is_read_later ? 'text-blue-500 hover:text-blue-600' : 'hover:text-blue-500',
+        ]"
+        :title="article.is_read_later ? t('removeFromReadLater') : t('addToReadLater')"
+      >
+        <PhClockCountdown
+          :size="18"
+          class="sm:w-5 sm:h-5"
+          :weight="article.is_read_later ? 'fill' : 'regular'"
         />
       </button>
       <button @click="$emit('openOriginal')" class="action-btn" :title="t('openInBrowser')">

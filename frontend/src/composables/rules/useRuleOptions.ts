@@ -36,6 +36,7 @@ export function useRuleOptions() {
     { value: 'is_read', labelKey: 'readStatus', multiSelect: false, booleanField: true },
     { value: 'is_favorite', labelKey: 'favoriteStatus', multiSelect: false, booleanField: true },
     { value: 'is_hidden', labelKey: 'hiddenStatus', multiSelect: false, booleanField: true },
+    { value: 'is_read_later', labelKey: 'readLaterStatus', multiSelect: false, booleanField: true },
   ];
 
   // Operator options for article title
@@ -58,6 +59,8 @@ export function useRuleOptions() {
     { value: 'unhide', labelKey: 'actionUnhide' },
     { value: 'mark_read', labelKey: 'actionMarkRead' },
     { value: 'mark_unread', labelKey: 'actionMarkUnread' },
+    { value: 'read_later', labelKey: 'actionReadLater' },
+    { value: 'remove_read_later', labelKey: 'actionRemoveReadLater' },
   ];
 
   // Feed names for multi-select
@@ -96,7 +99,7 @@ export function isMultiSelectField(field: string): boolean {
 }
 
 export function isBooleanField(field: string): boolean {
-  return field === 'is_read' || field === 'is_favorite' || field === 'is_hidden';
+  return field === 'is_read' || field === 'is_favorite' || field === 'is_hidden' || field === 'is_read_later';
 }
 
 export function needsOperator(field: string): boolean {

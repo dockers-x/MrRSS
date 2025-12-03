@@ -129,6 +129,7 @@ func initSchema(db *sql.DB) error {
 		is_read BOOLEAN DEFAULT 0,
 		is_favorite BOOLEAN DEFAULT 0,
 		is_hidden BOOLEAN DEFAULT 0,
+		is_read_later BOOLEAN DEFAULT 0,
 		FOREIGN KEY(feed_id) REFERENCES feeds(id)
 	);
 
@@ -138,6 +139,7 @@ func initSchema(db *sql.DB) error {
 	CREATE INDEX IF NOT EXISTS idx_articles_is_read ON articles(is_read);
 	CREATE INDEX IF NOT EXISTS idx_articles_is_favorite ON articles(is_favorite);
 	CREATE INDEX IF NOT EXISTS idx_articles_is_hidden ON articles(is_hidden);
+	CREATE INDEX IF NOT EXISTS idx_articles_is_read_later ON articles(is_read_later);
 	CREATE INDEX IF NOT EXISTS idx_feeds_category ON feeds(category);
 
 	-- Composite indexes for common query patterns
@@ -161,6 +163,9 @@ func runMigrations(db *sql.DB) error {
 	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN content TEXT DEFAULT ''`)
 	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN is_hidden BOOLEAN DEFAULT 0`)
 	_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN last_error TEXT DEFAULT ''`)
+
+	// Migration: Add is_read_later column for read later feature
+	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN is_read_later BOOLEAN DEFAULT 0`)
 
 	return nil
 }

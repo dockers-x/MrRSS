@@ -28,6 +28,7 @@ type Article struct {
 	IsRead          bool      `json:"is_read"`
 	IsFavorite      bool      `json:"is_favorite"`
 	IsHidden        bool      `json:"is_hidden"`
+	IsReadLater     bool      `json:"is_read_later"`
 	FeedTitle       string    `json:"feed_title,omitempty"` // Joined field
 	TranslatedTitle string    `json:"translated_title"`
 }

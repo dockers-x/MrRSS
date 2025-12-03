@@ -100,6 +100,24 @@ export function useArticleDetail() {
     fetch(`/api/articles/favorite?id=${article.value.id}`, { method: 'POST' });
   }
 
+  async function toggleReadLater() {
+    if (!article.value) return;
+    const newState = !article.value.is_read_later;
+    article.value.is_read_later = newState;
+    // When adding to read later, also mark as unread
+    if (newState) {
+      article.value.is_read = false;
+    }
+    try {
+      await fetch(`/api/articles/toggle-read-later?id=${article.value.id}`, { method: 'POST' });
+      store.fetchUnreadCounts();
+    } catch (e) {
+      console.error('Error toggling read later:', e);
+      // Revert on error
+      article.value.is_read_later = !newState;
+    }
+  }
+
   function openOriginal() {
     if (article.value) BrowserOpenURL(article.value.url);
   }
@@ -335,6 +353,7 @@ export function useArticleDetail() {
     close,
     toggleRead,
     toggleFavorite,
+    toggleReadLater,
     openOriginal,
     toggleContentView,
     closeImageViewer,

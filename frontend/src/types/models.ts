@@ -15,6 +15,7 @@ export interface Article {
   is_read: boolean;
   is_favorite: boolean;
   is_hidden: boolean;
+  is_read_later: boolean;
 }
 
 export interface Feed {
@@ -87,7 +88,7 @@ export interface RuleCondition {
 }
 
 export interface FilterCondition {
-  field: 'feed_name' | 'feed_category' | 'article_title' | 'is_read' | 'is_favorite' | 'is_hidden';
+  field: 'feed_name' | 'feed_category' | 'article_title' | 'is_read' | 'is_favorite' | 'is_hidden' | 'is_read_later';
   operator: 'contains' | 'equals' | 'not_equals';
   value: string;
   logic?: 'and' | 'or' | 'not';
@@ -99,7 +100,9 @@ export type RuleAction =
   | { type: 'hide' }
   | { type: 'unhide' }
   | { type: 'mark_read' }
-  | { type: 'mark_unread' };
+  | { type: 'mark_unread' }
+  | { type: 'read_later' }
+  | { type: 'remove_read_later' };
 
 export interface KeyboardShortcut {
   action: string;

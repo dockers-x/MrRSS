@@ -21,6 +21,7 @@ export function useFilterFields() {
     { value: 'published_before', labelKey: 'publishedBefore', multiSelect: false },
     { value: 'is_read', labelKey: 'readStatus', multiSelect: false, booleanField: true },
     { value: 'is_favorite', labelKey: 'favoriteStatus', multiSelect: false, booleanField: true },
+    { value: 'is_read_later', labelKey: 'readLaterStatus', multiSelect: false, booleanField: true },
   ];
 
   /**
@@ -85,7 +86,7 @@ export function useFilterFields() {
    * Check if field is a boolean field
    */
   function isBooleanField(field: string): boolean {
-    return field === 'is_read' || field === 'is_favorite';
+    return field === 'is_read' || field === 'is_favorite' || field === 'is_read_later';
   }
 
   /**

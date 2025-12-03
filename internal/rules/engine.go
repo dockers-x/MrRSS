@@ -238,6 +238,14 @@ func evaluateCondition(article models.Article, condition Condition, feedCategori
 			result = article.IsHidden == wantHidden
 		}
 
+	case "is_read_later":
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantReadLater := condition.Value == "true"
+			result = article.IsReadLater == wantReadLater
+		}
+
 	default:
 		result = true
 	}
@@ -280,6 +288,10 @@ func (e *Engine) applyAction(articleID int64, action string) error {
 		return e.db.MarkArticleRead(articleID, true)
 	case "mark_unread":
 		return e.db.MarkArticleRead(articleID, false)
+	case "read_later":
+		return e.db.SetArticleReadLater(articleID, true)
+	case "remove_read_later":
+		return e.db.SetArticleReadLater(articleID, false)
 	default:
 		log.Printf("Unknown action: %s", action)
 		return nil

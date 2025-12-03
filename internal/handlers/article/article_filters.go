@@ -149,6 +149,15 @@ func evaluateSingleCondition(article models.Article, condition FilterCondition, 
 			result = article.IsFavorite == wantFavorite
 		}
 
+	case "is_read_later":
+		// Filter by read later status
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantReadLater := condition.Value == "true"
+			result = article.IsReadLater == wantReadLater
+		}
+
 	default:
 		result = true
 	}

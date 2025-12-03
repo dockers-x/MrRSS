@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhEyeSlash, PhStar } from '@phosphor-icons/vue';
+import { PhEyeSlash, PhStar, PhClockCountdown } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
 import { formatDate as formatDateUtil } from '@/utils/date';
 
@@ -40,6 +40,7 @@ function handleImageError(event: Event) {
       article.is_read ? 'read' : '',
       article.is_favorite ? 'favorite' : '',
       article.is_hidden ? 'hidden' : '',
+      article.is_read_later ? 'read-later' : '',
       isActive ? 'active' : '',
     ]"
   >
@@ -83,6 +84,12 @@ function handleImageError(event: Event) {
           {{ article.feed_title }}
         </span>
         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <PhClockCountdown
+            v-if="article.is_read_later"
+            :size="14"
+            class="text-blue-500 sm:w-[18px] sm:h-[18px]"
+            weight="fill"
+          />
           <PhStar
             v-if="article.is_favorite"
             :size="14"
@@ -119,6 +126,10 @@ function handleImageError(event: Event) {
 
 .article-card.favorite {
   background-color: rgba(255, 215, 0, 0.05);
+}
+
+.article-card.read-later {
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 .article-card.hidden {
