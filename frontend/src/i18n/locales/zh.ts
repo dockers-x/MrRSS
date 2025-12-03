@@ -381,6 +381,8 @@ const zh: TranslationMessages = {
   sortByName: '名称',
   sortByDate: '添加时间',
   sortByCategory: '分类',
+  hideFromTimeline: '从时间线隐藏',
+  hideFromTimelineDesc: '在"所有文章"和"未读"视图中隐藏此订阅源的文章',
 };
 
 export default zh;

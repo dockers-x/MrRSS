@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { PhWarningCircle } from '@phosphor-icons/vue';
+import { PhWarningCircle, PhEyeSlash } from '@phosphor-icons/vue';
 import type { Feed } from '@/types/models';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface Props {
   feed: Feed;
@@ -38,6 +41,12 @@ function getFavicon(url: string): string {
       />
     </div>
     <span class="truncate flex-1">{{ feed.title }}</span>
+    <PhEyeSlash
+      v-if="feed.hide_from_timeline"
+      :size="16"
+      class="text-text-secondary shrink-0"
+      :title="t('hideFromTimeline')"
+    />
     <PhWarningCircle
       v-if="feed.last_error"
       :size="16"

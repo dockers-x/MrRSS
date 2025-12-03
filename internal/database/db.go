@@ -90,6 +90,10 @@ func (db *DB) Init() error {
 		// Migration: Add script_path column to feeds table for custom script support
 		// Error is ignored - if column exists, the operation fails harmlessly.
 		_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN script_path TEXT DEFAULT ''`)
+
+		// Migration: Add hide_from_timeline column to feeds table
+		// Error is ignored - if column exists, the operation fails harmlessly.
+		_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN hide_from_timeline BOOLEAN DEFAULT 0`)
 	})
 	return err
 }

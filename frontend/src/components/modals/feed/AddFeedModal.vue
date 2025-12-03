@@ -13,6 +13,7 @@ const title = ref('');
 const url = ref('');
 const category = ref('');
 const scriptPath = ref('');
+const hideFromTimeline = ref(false);
 const isSubmitting = ref(false);
 
 // Available scripts from the scripts directory
@@ -61,9 +62,10 @@ async function addFeed() {
   isSubmitting.value = true;
 
   try {
-    const body: Record<string, string> = {
+    const body: Record<string, string | boolean> = {
       category: category.value,
       title: title.value,
+      hide_from_timeline: hideFromTimeline.value,
     };
 
     if (feedType.value === 'url') {
@@ -84,6 +86,7 @@ async function addFeed() {
       url.value = '';
       category.value = '';
       scriptPath.value = '';
+      hideFromTimeline.value = false;
       window.showToast(t('feedAddedSuccess'), 'success');
       close();
     } else {
@@ -218,6 +221,23 @@ async function openScriptsFolder() {
             :placeholder="t('categoryPlaceholder')"
             class="input-field"
           />
+        </div>
+
+        <!-- Hide from Timeline Toggle -->
+        <div class="mb-4">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="font-semibold text-sm text-text-secondary">{{
+                t('hideFromTimeline')
+              }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('hideFromTimelineDesc') }}</p>
+            </div>
+            <input
+              type="checkbox"
+              v-model="hideFromTimeline"
+              class="w-4 h-4 rounded border-border text-accent focus:ring-2 focus:ring-accent cursor-pointer"
+            />
+          </label>
         </div>
       </div>
       <div class="p-5 border-t border-border bg-bg-secondary text-right">

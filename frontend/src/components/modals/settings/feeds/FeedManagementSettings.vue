@@ -10,6 +10,7 @@ import {
   PhPencil,
   PhSortAscending,
   PhCode,
+  PhEyeSlash,
 } from '@phosphor-icons/vue';
 import type { Feed } from '@/types/models';
 
@@ -242,7 +243,15 @@ async function openScriptsFolder() {
             />
           </div>
           <div class="truncate flex-1 min-w-0">
-            <div class="font-medium truncate text-xs sm:text-sm">{{ feed.title }}</div>
+            <div class="font-medium truncate text-xs sm:text-sm flex items-center gap-1">
+              {{ feed.title }}
+              <PhEyeSlash
+                v-if="feed.hide_from_timeline"
+                :size="12"
+                class="text-text-secondary shrink-0"
+                :title="t('hideFromTimeline')"
+              />
+            </div>
             <div class="text-xs text-text-secondary truncate hidden sm:block">
               <span v-if="feed.category" class="inline-flex items-center gap-1">
                 <PhFolder :size="10" class="inline" />

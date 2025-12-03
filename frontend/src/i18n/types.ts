@@ -380,6 +380,8 @@ export interface TranslationMessages {
   sortByName: string;
   sortByDate: string;
   sortByCategory: string;
+  hideFromTimeline: string;
+  hideFromTimelineDesc: string;
 }
 
 export type SupportedLocale = 'en-US' | 'zh-CN';

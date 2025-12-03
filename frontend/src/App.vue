@@ -132,6 +132,8 @@ function onFeedAdded(): void {
 
 function onFeedUpdated(): void {
   store.fetchFeeds();
+  // Refresh articles to immediately apply hide_from_timeline changes
+  store.fetchArticles();
 }
 </script>
 

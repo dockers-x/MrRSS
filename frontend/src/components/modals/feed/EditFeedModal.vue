@@ -25,6 +25,7 @@ const title = ref('');
 const url = ref('');
 const category = ref('');
 const scriptPath = ref('');
+const hideFromTimeline = ref(false);
 const isSubmitting = ref(false);
 
 // Available scripts from the scripts directory
@@ -39,6 +40,7 @@ onMounted(async () => {
   url.value = props.feed.url;
   category.value = props.feed.category;
   scriptPath.value = props.feed.script_path || '';
+  hideFromTimeline.value = props.feed.hide_from_timeline || false;
 
   // Determine feed type based on whether it has a script path
   if (props.feed.script_path) {
@@ -78,10 +80,11 @@ async function save() {
   isSubmitting.value = true;
 
   try {
-    const body: Record<string, string | number> = {
+    const body: Record<string, string | number | boolean> = {
       id: props.feed.id,
       title: title.value,
       category: category.value,
+      hide_from_timeline: hideFromTimeline.value,
     };
 
     if (feedType.value === 'url') {
@@ -224,6 +227,23 @@ async function openScriptsFolder() {
             :placeholder="t('categoryPlaceholder')"
             class="input-field"
           />
+        </div>
+
+        <!-- Hide from Timeline Toggle -->
+        <div class="mb-4">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <span class="font-semibold text-sm text-text-secondary">{{
+                t('hideFromTimeline')
+              }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ t('hideFromTimelineDesc') }}</p>
+            </div>
+            <input
+              type="checkbox"
+              v-model="hideFromTimeline"
+              class="w-4 h-4 rounded border-border text-accent focus:ring-2 focus:ring-accent cursor-pointer"
+            />
+          </label>
         </div>
       </div>
       <div class="p-5 border-t border-border bg-bg-secondary text-right">

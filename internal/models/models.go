@@ -14,6 +14,7 @@ type Feed struct {
 	LastError          string    `json:"last_error,omitempty"`  // Track last fetch error
 	DiscoveryCompleted bool      `json:"discovery_completed"`   // Track if discovery has been run
 	ScriptPath         string    `json:"script_path,omitempty"` // Path to custom script for fetching feed
+	HideFromTimeline   bool      `json:"hide_from_timeline"`    // Hide articles from timeline views
 }
 
 type Article struct {

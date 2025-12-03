@@ -384,6 +384,8 @@ const en: TranslationMessages = {
   sortByName: 'Name',
   sortByDate: 'Date Added',
   sortByCategory: 'Category',
+  hideFromTimeline: 'Hide from Timeline',
+  hideFromTimelineDesc: 'Hide this feed\'s articles from "All Articles" and "Unread" views',
 };
 
 export default en;

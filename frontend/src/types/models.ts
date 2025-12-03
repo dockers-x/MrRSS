@@ -28,6 +28,7 @@ export interface Feed {
   image_url?: string;
   last_error?: string;
   script_path?: string;
+  hide_from_timeline?: boolean;
 }
 
 export interface UnreadCounts {

@@ -68,8 +68,17 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 	switch filter {
 	case "unread":
 		whereClauses = append(whereClauses, "a.is_read = 0")
+		// Exclude feeds marked as hide_from_timeline when viewing unread (unless specific feed/category selected)
+		if feedID <= 0 && category == "" {
+			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
+		}
 	case "favorites":
 		whereClauses = append(whereClauses, "a.is_favorite = 1")
+	case "all":
+		// Exclude feeds marked as hide_from_timeline when viewing all articles (unless specific feed/category selected)
+		if feedID <= 0 && category == "" {
+			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
+		}
 	}
 
 	if feedID > 0 {
