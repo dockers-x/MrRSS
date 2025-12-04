@@ -254,7 +254,7 @@ async function clearReadLater(): Promise<void> {
     class="article-list flex flex-col w-full border-r border-border bg-bg-primary shrink-0 h-full"
   >
     <div class="p-2 sm:p-4 border-b border-border bg-bg-primary">
-      <div class="flex items-center justify-between mb-2 sm:mb-3">
+      <div class="flex items-center justify-between sm:mb-2">
         <h3 class="m-0 text-base sm:text-lg font-semibold">{{ t('articles') }}</h3>
         <div class="flex items-center gap-1 sm:gap-2">
           <!-- Clear Read Later button - only shown when viewing Read Later list -->

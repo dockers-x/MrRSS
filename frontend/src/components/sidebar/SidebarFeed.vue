@@ -69,8 +69,11 @@ function getFavicon(url: string): string {
   background-color: rgba(120, 120, 120, 0.25);
   color: #444444;
 }
-:global(.dark-mode) .unread-badge {
-  background-color: rgba(180, 180, 180, 0.3);
-  color: #ffffff;
+</style>
+
+<style>
+.dark-mode .unread-badge {
+  background-color: rgba(100, 100, 100, 0.6) !important;
+  color: #f0f0f0 !important;
 }
 </style>

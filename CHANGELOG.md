@@ -5,6 +5,25 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2025-12-04
+
+### Added
+
+- Implemented Read Later functionality, articles marked for read later are automatically set to unread.
+
+### Changed
+
+- Last update time now displayed as inline sub-text instead of separate row.
+- Added toggle filter shortcut (default: `f`).
+- Nav icons use fill style when active for stronger visual feedback.
+- Category headers are now sticky for scroll context retention.
+- Feed refresh now skipped on startup if last article update interval is within set threshold.
+- After each article refresh completes, the app now checks for updates. If a new version is detected, it automatically downloads and installs in the background.
+
+### Fixed
+
+- Fixed styling issues, including incorrect icon colors in dark mode, inconsistent font sizes, and misaligned elements.
+
 ## [1.2.7] - 2025-12-03
 
 ### Added

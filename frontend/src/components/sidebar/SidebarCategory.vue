@@ -33,7 +33,7 @@ const emit = defineEmits<{
     >
       <span class="flex-1 flex items-center gap-2" @click="emit('selectCategory')">
         <PhFolderDashed v-if="isUncategorized" :size="20" />
-        <PhFolder v-else :size="20" />
+        <PhFolder v-else :size="20" :weight="'fill'" />
         {{ name }}
       </span>
       <span v-if="unreadCount > 0" class="unread-badge mr-1">{{ unreadCount }}</span>
@@ -85,8 +85,12 @@ const emit = defineEmits<{
   background-color: rgba(120, 120, 120, 0.25);
   color: #444444;
 }
-:global(.dark-mode) .unread-badge {
-  background-color: rgba(180, 180, 180, 0.3);
-  color: #ffffff;
+</style>
+
+<style>
+.dark-mode .unread-badge {
+  /* This style will be applied to child components, so it can not use scoped */
+  background-color: rgba(100, 100, 100, 0.6) !important;
+  color: #f0f0f0 !important;
 }
 </style>
