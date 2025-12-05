@@ -71,7 +71,11 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 		// Use AI summarization
 		apiKey, err := h.DB.GetSetting("summary_ai_api_key")
 		if err != nil || apiKey == "" {
-			http.Error(w, "AI API key is required for AI summarization", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error": "missing_ai_api_key",
+			})
 			return
 		}
 

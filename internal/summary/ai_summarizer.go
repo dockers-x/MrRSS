@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -22,39 +23,21 @@ type AISummarizer struct {
 // NewAISummarizer creates a new AI summarizer with the given credentials.
 // endpoint should be the API base URL (e.g., "https://api.openai.com/v1" for OpenAI)
 // model should be the model name (e.g., "gpt-4o-mini", "claude-3-haiku-20240307")
+// Summary settings are independent from translation settings.
 func NewAISummarizer(apiKey, endpoint, model string) *AISummarizer {
 	defaults := config.Get()
-	// Default to OpenAI endpoint if not specified
+	// Use only summary-specific endpoint and model; no fallback to translation settings
 	if endpoint == "" {
 		endpoint = defaults.SummaryAIEndpoint
-		if endpoint == "" {
-			endpoint = defaults.AIEndpoint
-		}
 	}
-	// Default to a cost-effective model if not specified
 	if model == "" {
 		model = defaults.SummaryAIModel
-		if model == "" {
-			model = defaults.AIModel
-		}
 	}
 	return &AISummarizer{
 		APIKey:   apiKey,
 		Endpoint: strings.TrimSuffix(endpoint, "/"),
 		Model:    model,
-		client:   &http.Client{Timeout: 60 * time.Second},
-	}
-}
-
-// getTargetWordCount returns the target word count based on summary length
-func getTargetWordCountForAI(length SummaryLength) int {
-	switch length {
-	case Short:
-		return ShortTargetWords
-	case Long:
-		return LongTargetWords
-	default:
-		return MediumTargetWords
+		client:   &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
@@ -72,12 +55,13 @@ func (s *AISummarizer) Summarize(text string, length SummaryLength) (SummaryResu
 	}
 
 	// Truncate text if too long to save tokens
-	// This limits API usage while providing enough context for a good summary
-	if len(cleanedText) > MaxInputCharsForAI {
-		cleanedText = cleanedText[:MaxInputCharsForAI]
+	// Use rune slicing to avoid breaking multi-byte UTF-8 characters (e.g., Chinese, emoji)
+	runes := []rune(cleanedText)
+	if len(runes) > MaxInputCharsForAI {
+		cleanedText = string(runes[:MaxInputCharsForAI])
 	}
 
-	targetWords := getTargetWordCountForAI(length)
+	targetWords := getTargetWordCount(length)
 
 	// Concise prompt to minimize token usage
 	systemPrompt := "You are a summarizer. Generate a concise summary of the given text. Output ONLY the summary, nothing else."
@@ -98,7 +82,16 @@ func (s *AISummarizer) Summarize(text string, length SummaryLength) (SummaryResu
 		return SummaryResult{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
+	// Validate endpoint URL to prevent SSRF attacks
 	apiURL := s.Endpoint + "/chat/completions"
+	parsedURL, err := url.Parse(apiURL)
+	if err != nil {
+		return SummaryResult{}, fmt.Errorf("invalid API endpoint URL: %w", err)
+	}
+	if parsedURL.Scheme != "https" {
+		return SummaryResult{}, fmt.Errorf("API endpoint must use HTTPS for security")
+	}
+
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return SummaryResult{}, fmt.Errorf("failed to create request: %w", err)

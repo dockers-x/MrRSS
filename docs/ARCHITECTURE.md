@@ -93,7 +93,6 @@ handlers/
 - Supports OpenAI-compatible APIs (GPT, Claude, etc.)
 - Configurable API endpoint and model
 - Token-efficient prompts
-- Fallback to local algorithm when AI unavailable
 
 #### Translation (`internal/translation/`)
 

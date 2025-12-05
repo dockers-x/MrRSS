@@ -21,7 +21,9 @@ const MinContentLength = 200
 const MinSentenceCount = 3
 
 // MaxInputCharsForAI is the maximum number of characters to send to AI for summarization.
-// This limits token usage while providing enough context for a good summary.
+// 4000 characters ≈ 1000 tokens for most languages (average 4 chars/token), leaving room for
+// system prompt and response within typical 8k token context windows. This limits token usage
+// while providing enough context for a good summary.
 const MaxInputCharsForAI = 4000
 
 // Target word counts for different summary lengths
