@@ -8,7 +8,7 @@ interface Props {
   articleTitle: string;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const { t } = useI18n();
 
@@ -113,18 +113,13 @@ const progressPercentage = computed(() => {
         <span class="text-xs text-text-secondary min-w-[40px] text-right">{{
           formatTime(currentTime)
         }}</span>
-        <div
-          class="flex-1 h-1.5 bg-bg-tertiary rounded-full cursor-pointer relative"
-          @click="seek"
-        >
+        <div class="flex-1 h-1.5 bg-bg-tertiary rounded-full cursor-pointer relative" @click="seek">
           <div
             class="h-full bg-accent rounded-full transition-all duration-100"
             :style="{ width: `${progressPercentage}%` }"
           />
         </div>
-        <span class="text-xs text-text-secondary min-w-[40px]">{{
-          formatTime(duration)
-        }}</span>
+        <span class="text-xs text-text-secondary min-w-[40px]">{{ formatTime(duration) }}</span>
       </div>
     </div>
 
