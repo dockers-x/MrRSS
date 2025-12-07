@@ -188,43 +188,39 @@ async function translateContentParagraphs(content: string) {
     // Get the visible text content for translation
     // For elements containing code/kbd/math inline, extract only translatable text
     let visibleText = '';
-    
+
     // Check if element contains technical elements
     const hasTechnicalContent = htmlEl.querySelector('code, kbd, .katex, .katex-inline');
-    
+
     if (hasTechnicalContent) {
       // Extract only text nodes, skipping technical elements
       const textNodes: string[] = [];
-      const walker = document.createTreeWalker(
-        htmlEl,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: (node) => {
-            const parent = node.parentElement;
-            if (
-              parent?.tagName === 'CODE' ||
-              parent?.tagName === 'KBD' ||
-              parent?.classList.contains('katex') ||
-              parent?.classList.contains('katex-inline')
-            ) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            return NodeFilter.FILTER_ACCEPT;
-          },
-        }
-      );
-      
+      const walker = document.createTreeWalker(htmlEl, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          const parent = node.parentElement;
+          if (
+            parent?.tagName === 'CODE' ||
+            parent?.tagName === 'KBD' ||
+            parent?.classList.contains('katex') ||
+            parent?.classList.contains('katex-inline')
+          ) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+
       let node;
       while ((node = walker.nextNode())) {
         const text = node.textContent?.trim();
         if (text) textNodes.push(text);
       }
-      
+
       visibleText = textNodes.join(' ').trim();
     } else {
       visibleText = htmlEl.textContent?.trim() || '';
     }
-    
+
     if (!visibleText || visibleText.length < 2) continue;
 
     // Translate the visible text

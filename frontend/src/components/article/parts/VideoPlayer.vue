@@ -64,7 +64,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Video Player -->
-    <div class="relative w-full" style="padding-bottom: 56.25%;">
+    <div class="relative w-full" style="padding-bottom: 56.25%">
       <!-- 16:9 Aspect Ratio -->
       <iframe
         ref="iframeRef"
@@ -74,13 +74,15 @@ onUnmounted(() => {
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen
       />
-      
+
       <!-- Loading indicator -->
       <div
         v-if="isLoading"
         class="absolute inset-0 flex items-center justify-center bg-bg-tertiary"
       >
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"
+        ></div>
       </div>
     </div>
   </div>

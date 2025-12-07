@@ -10,7 +10,7 @@ interface Props {
   hasMediaContent?: boolean; // Whether article has audio/video content
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   hasMediaContent: false,
 });
 </script>

@@ -1,4 +1,4 @@
-import { onMounted, nextTick } from 'vue';
+import { nextTick } from 'vue';
 import katex from 'katex';
 
 /**
@@ -15,28 +15,26 @@ export function useArticleRendering() {
 
     try {
       // Find all text nodes that might contain math
-      const walker = document.createTreeWalker(
-        container,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: (node) => {
-            // Skip if already inside a math element
-            const parent = node.parentElement;
-            if (parent?.classList.contains('katex') || 
-                parent?.classList.contains('katex-display') ||
-                parent?.tagName === 'CODE' ||
-                parent?.tagName === 'PRE' ||
-                parent?.tagName === 'SCRIPT') {
-              return NodeFilter.FILTER_REJECT;
-            }
-            // Only accept nodes that contain $ symbols
-            if (node.textContent?.includes('$')) {
-              return NodeFilter.FILTER_ACCEPT;
-            }
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          // Skip if already inside a math element
+          const parent = node.parentElement;
+          if (
+            parent?.classList.contains('katex') ||
+            parent?.classList.contains('katex-display') ||
+            parent?.tagName === 'CODE' ||
+            parent?.tagName === 'PRE' ||
+            parent?.tagName === 'SCRIPT'
+          ) {
             return NodeFilter.FILTER_REJECT;
-          },
-        }
-      );
+          }
+          // Only accept nodes that contain $ symbols
+          if (node.textContent?.includes('$')) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          return NodeFilter.FILTER_REJECT;
+        },
+      });
 
       const nodesToProcess: Text[] = [];
       let currentNode: Node | null;
@@ -54,11 +52,16 @@ export function useArticleRendering() {
 
         // Regex to match $$...$$ (display math) and $...$ (inline math)
         // Display math takes precedence
-        const displayMathRegex = /\$\$([^\$]+)\$\$/g;
-        const inlineMathRegex = /\$([^\$\n]+)\$/g;
+        const displayMathRegex = /\$\$([^$]+)\$\$/g;
+        const inlineMathRegex = /\$([^$\n]+)\$/g;
 
         // First, find all display math
-        const displayMatches: Array<{ start: number; end: number; math: string; isDisplay: boolean }> = [];
+        const displayMatches: Array<{
+          start: number;
+          end: number;
+          math: string;
+          isDisplay: boolean;
+        }> = [];
         let match;
         while ((match = displayMathRegex.exec(text)) !== null) {
           displayMatches.push({
@@ -70,7 +73,12 @@ export function useArticleRendering() {
         }
 
         // Then find all inline math, but skip those inside display math
-        const inlineMatches: Array<{ start: number; end: number; math: string; isDisplay: boolean }> = [];
+        const inlineMatches: Array<{
+          start: number;
+          end: number;
+          math: string;
+          isDisplay: boolean;
+        }> = [];
         while ((match = inlineMathRegex.exec(text)) !== null) {
           const isInsideDisplay = displayMatches.some(
             (dm) => match!.index >= dm.start && match!.index < dm.end
