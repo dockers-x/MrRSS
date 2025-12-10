@@ -62,7 +62,7 @@ async function cleanMediaCache() {
 onMounted(() => {
   fetchMediaCacheSize();
 });
-
+</script>
 
 <template>
   <div class="setting-group">
