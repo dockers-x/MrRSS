@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strings"
+	"time"
 
 	"MrRSS/internal/handlers/core"
+	"MrRSS/internal/utils"
 	"MrRSS/internal/version"
 )
 
@@ -32,10 +33,10 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		proxyPort, _ := h.DB.GetSetting("proxy_port")
 		proxyUsername, _ := h.DB.GetSetting("proxy_username")
 		proxyPassword, _ := h.DB.GetSetting("proxy_password")
-		proxyURL = buildProxyURL(proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword)
+		proxyURL = utils.BuildProxyURL(proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword)
 	}
 
-	client, err := createHTTPClient(proxyURL)
+	client, err := utils.CreateHTTPClient(proxyURL, 30*time.Second)
 	if err != nil {
 		log.Printf("Error creating HTTP client: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -149,42 +150,4 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(response)
 }
 
-// buildProxyURL constructs a proxy URL from settings
-func buildProxyURL(proxyType, proxyHost, proxyPort, username, password string) string {
-	if proxyHost == "" || proxyPort == "" {
-		return ""
-	}
 
-	// Build auth string if username is provided
-	auth := ""
-	if username != "" {
-		if password != "" {
-			auth = username + ":" + password + "@"
-		} else {
-			auth = username + "@"
-		}
-	}
-
-	return proxyType + "://" + auth + proxyHost + ":" + proxyPort
-}
-
-// createHTTPClient creates an HTTP client with optional proxy support
-func createHTTPClient(proxyURLStr string) (*http.Client, error) {
-	client := &http.Client{}
-
-	if proxyURLStr != "" {
-		// Parse proxy URL using net/url package
-		parsedURL, err := url.Parse(proxyURLStr)
-		if err != nil {
-			return nil, err
-		}
-
-		// Create transport with proxy
-		transport := &http.Transport{
-			Proxy: http.ProxyURL(parsedURL),
-		}
-		client.Transport = transport
-	}
-
-	return client, nil
-}

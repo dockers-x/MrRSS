@@ -1,10 +1,9 @@
 package translation
 
 import (
-	"crypto/tls"
+	"MrRSS/internal/utils"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -17,53 +16,6 @@ type Translator interface {
 // DBInterface defines the minimal database interface needed for proxy settings
 type DBInterface interface {
 	GetSetting(key string) (string, error)
-}
-
-// buildProxyURL constructs a proxy URL from settings
-func buildProxyURL(proxyType, proxyHost, proxyPort, username, password string) string {
-	if proxyHost == "" || proxyPort == "" {
-		return ""
-	}
-
-	// Build auth string if username is provided
-	auth := ""
-	if username != "" {
-		if password != "" {
-			auth = username + ":" + password + "@"
-		} else {
-			auth = username + "@"
-		}
-	}
-
-	return fmt.Sprintf("%s://%s%s:%s", proxyType, auth, proxyHost, proxyPort)
-}
-
-// createHTTPClient creates an HTTP client with optional proxy support
-func createHTTPClient(proxyURL string, timeout time.Duration) (*http.Client, error) {
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     90 * time.Second,
-	}
-
-	// Configure proxy if provided
-	if proxyURL != "" {
-		parsedProxy, err := url.Parse(proxyURL)
-		if err != nil {
-			return nil, fmt.Errorf("invalid proxy URL: %w", err)
-		}
-		transport.Proxy = http.ProxyURL(parsedProxy)
-	}
-
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   timeout,
-	}
-
-	return client, nil
 }
 
 // CreateHTTPClientWithProxy creates an HTTP client with global proxy settings if enabled
@@ -79,11 +31,11 @@ func CreateHTTPClientWithProxy(db DBInterface, timeout time.Duration) (*http.Cli
 		proxyPort, _ := db.GetSetting("proxy_port")
 		proxyUsername, _ := db.GetSetting("proxy_username")
 		proxyPassword, _ := db.GetSetting("proxy_password")
-		proxyURL = buildProxyURL(proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword)
+		proxyURL = utils.BuildProxyURL(proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword)
 	}
 
 	// Create HTTP client with or without proxy
-	return createHTTPClient(proxyURL, timeout)
+	return utils.CreateHTTPClient(proxyURL, timeout)
 }
 
 // MockTranslator is a simple translator for demonstration

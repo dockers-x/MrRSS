@@ -88,9 +88,9 @@ func (irc *IntelligentRefreshCalculator) calculateAverageInterval(articles []mod
 	return time.Duration(math.Round(avgInterval.Seconds())) * time.Second
 }
 
-// GetStaggeredStartTime calculates a staggered start time for a feed
+// GetStaggeredDelay calculates a staggered delay for a feed
 // to avoid all feeds refreshing at the same time
-func GetStaggeredStartTime(feedID int64, totalFeeds int) time.Duration {
+func GetStaggeredDelay(feedID int64, totalFeeds int) time.Duration {
 	if totalFeeds <= 1 {
 		return 0
 	}

@@ -98,6 +98,7 @@ onMounted(async () => {
     } catch (e) {
       // Fallback for invalid URL format
       console.error('Failed to parse proxy URL:', e);
+      window.showToast(t('invalidProxyUrl'), 'error');
     }
   } else if (props.feed.proxy_enabled) {
     proxyMode.value = 'global';
@@ -162,10 +163,12 @@ function buildProxyUrl(): string {
     return '';
   }
 
-  const auth =
-    proxyUsername.value && proxyPassword.value
+  let auth = '';
+  if (proxyUsername.value) {
+    auth = proxyPassword.value
       ? `${proxyUsername.value}:${proxyPassword.value}@`
-      : '';
+      : `${proxyUsername.value}@`;
+  }
 
   return `${proxyType.value}://${auth}${proxyHost.value}:${proxyPort.value}`;
 }

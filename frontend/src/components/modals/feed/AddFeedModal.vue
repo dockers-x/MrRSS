@@ -114,10 +114,12 @@ function buildProxyUrl(): string {
     return '';
   }
 
-  const auth =
-    proxyUsername.value && proxyPassword.value
+  let auth = '';
+  if (proxyUsername.value) {
+    auth = proxyPassword.value
       ? `${proxyUsername.value}:${proxyPassword.value}@`
-      : '';
+      : `${proxyUsername.value}@`;
+  }
 
   return `${proxyType.value}://${auth}${proxyHost.value}:${proxyPort.value}`;
 }

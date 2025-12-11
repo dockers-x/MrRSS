@@ -55,7 +55,7 @@ func (f *Fetcher) GetIntelligentRefreshCalculator() *IntelligentRefreshCalculato
 
 // GetStaggeredDelay calculates a staggered delay for feed refresh
 func (f *Fetcher) GetStaggeredDelay(feedID int64, totalFeeds int) time.Duration {
-	return GetStaggeredStartTime(feedID, totalFeeds)
+	return GetStaggeredDelay(feedID, totalFeeds)
 }
 
 // getHTTPClient returns an HTTP client configured with proxy if needed

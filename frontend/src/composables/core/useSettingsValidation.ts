@@ -56,7 +56,19 @@ export function useSettingsValidation(settings: Ref<SettingsData>) {
       return true; // Not enabled, so no validation needed
     }
 
-    return !!(settings.value.proxy_host?.trim() && settings.value.proxy_port?.trim());
+    const host = settings.value.proxy_host?.trim();
+    const portStr = settings.value.proxy_port?.trim();
+    if (!host || !portStr) {
+      return false;
+    }
+
+    // Validate port is a valid number in range 1-65535
+    const port = parseInt(portStr, 10);
+    if (isNaN(port) || port < 1 || port > 65535) {
+      return false;
+    }
+
+    return true;
   });
 
   /**

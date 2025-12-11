@@ -256,6 +256,8 @@ const en: TranslationMessages = {
   httpProxy: 'HTTP',
   httpsProxy: 'HTTPS',
   socks5Proxy: 'SOCKS5',
+  proxyCredentialsRequired: 'Proxy requires valid host and port',
+  invalidProxyUrl: 'Invalid proxy URL format',
 
   // Feeds Settings
   dataManagement: 'Data Management',

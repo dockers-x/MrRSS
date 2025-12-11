@@ -1,56 +1,19 @@
 package feed
 
 import (
-	"crypto/tls"
-	"fmt"
+	"MrRSS/internal/utils"
 	"net/http"
-	"net/url"
 	"time"
 )
 
 // CreateHTTPClient creates an HTTP client with optional proxy support
+// Wrapper around utils.CreateHTTPClient with default timeout for feed fetching
 func CreateHTTPClient(proxyURL string) (*http.Client, error) {
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     90 * time.Second,
-	}
-
-	// Configure proxy if provided
-	if proxyURL != "" {
-		parsedProxy, err := url.Parse(proxyURL)
-		if err != nil {
-			return nil, fmt.Errorf("invalid proxy URL: %w", err)
-		}
-		transport.Proxy = http.ProxyURL(parsedProxy)
-	}
-
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   30 * time.Second,
-	}
-
-	return client, nil
+	return utils.CreateHTTPClient(proxyURL, 30*time.Second)
 }
 
 // BuildProxyURL constructs a proxy URL from settings
+// Wrapper around utils.BuildProxyURL for backward compatibility
 func BuildProxyURL(proxyType, proxyHost, proxyPort, username, password string) string {
-	if proxyHost == "" || proxyPort == "" {
-		return ""
-	}
-
-	// Build auth string if username is provided
-	auth := ""
-	if username != "" {
-		if password != "" {
-			auth = username + ":" + password + "@"
-		} else {
-			auth = username + "@"
-		}
-	}
-
-	return fmt.Sprintf("%s://%s%s:%s", proxyType, auth, proxyHost, proxyPort)
+	return utils.BuildProxyURL(proxyType, proxyHost, proxyPort, username, password)
 }

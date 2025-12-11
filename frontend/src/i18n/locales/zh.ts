@@ -253,6 +253,8 @@ const zh: TranslationMessages = {
   httpProxy: 'HTTP',
   httpsProxy: 'HTTPS',
   socks5Proxy: 'SOCKS5',
+  proxyCredentialsRequired: '代理需要有效的主机和端口',
+  invalidProxyUrl: '无效的代理 URL 格式',
 
   // Feeds Settings
   dataManagement: '数据管理',
