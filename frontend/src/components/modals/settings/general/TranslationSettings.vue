@@ -75,7 +75,9 @@ defineProps<Props>();
           v-model="settings.google_translate_endpoint"
           class="input-field w-32 sm:w-48 text-xs sm:text-sm"
         >
-          <option value="translate.googleapis.com">{{ t('googleTranslateEndpointDefault') }}</option>
+          <option value="translate.googleapis.com">
+            {{ t('googleTranslateEndpointDefault') }}
+          </option>
           <option value="clients5.google.com">{{ t('googleTranslateEndpointAlternate') }}</option>
         </select>
       </div>
