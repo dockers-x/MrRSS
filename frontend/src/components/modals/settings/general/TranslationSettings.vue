@@ -60,6 +60,28 @@ defineProps<Props>();
         </select>
       </div>
 
+      <!-- Google Translate Endpoint -->
+      <div v-if="settings.translation_provider === 'google'" class="sub-setting-item">
+        <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+          <PhLink :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium mb-0 sm:mb-1 text-sm">{{ t('googleTranslateEndpoint') }}</div>
+            <div class="text-xs text-text-secondary hidden sm:block">
+              {{ t('googleTranslateEndpointDesc') }}
+            </div>
+          </div>
+        </div>
+        <select
+          v-model="settings.google_translate_endpoint"
+          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
+        >
+          <option value="translate.googleapis.com">
+            {{ t('googleTranslateEndpointDefault') }}
+          </option>
+          <option value="clients5.google.com">{{ t('googleTranslateEndpointAlternate') }}</option>
+        </select>
+      </div>
+
       <!-- DeepL API Key -->
       <div v-if="settings.translation_provider === 'deepl'" class="sub-setting-item">
         <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">

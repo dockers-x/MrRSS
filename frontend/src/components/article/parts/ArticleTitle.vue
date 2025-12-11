@@ -30,13 +30,13 @@ const showBilingualTitle = computed(() => {
   <!-- Title Section - Bilingual when translation enabled -->
   <div class="mb-3 sm:mb-4">
     <!-- Original Title -->
-    <h1 class="text-xl sm:text-3xl font-bold leading-tight text-text-primary">
+    <h1 class="text-xl sm:text-3xl font-bold leading-tight text-text-primary select-text">
       {{ article.title }}
     </h1>
     <!-- Translated Title (shown below if different from original) -->
     <h2
       v-if="showBilingualTitle"
-      class="text-base sm:text-xl font-medium leading-tight mt-2 text-text-secondary"
+      class="text-base sm:text-xl font-medium leading-tight mt-2 text-text-secondary select-text"
     >
       {{ translatedTitle }}
     </h2>

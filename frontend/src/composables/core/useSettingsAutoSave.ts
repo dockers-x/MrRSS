@@ -135,6 +135,8 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
           proxy_port: settings.value.proxy_port ?? settingsDefaults.proxy_port,
           proxy_username: settings.value.proxy_username ?? settingsDefaults.proxy_username,
           proxy_password: settings.value.proxy_password ?? settingsDefaults.proxy_password,
+          google_translate_endpoint:
+            settings.value.google_translate_endpoint ?? settingsDefaults.google_translate_endpoint,
         }),
       });
 

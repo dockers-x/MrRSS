@@ -61,12 +61,12 @@ const showSummary = ref(true);
         <!-- Show translated summary only when translation is enabled -->
         <div
           v-if="translationEnabled && translatedSummary"
-          class="text-sm text-text-primary leading-relaxed"
+          class="text-sm text-text-primary leading-relaxed select-text"
         >
           {{ translatedSummary }}
         </div>
         <!-- Show original summary when no translation or as fallback -->
-        <p v-else class="text-sm text-text-primary leading-relaxed">
+        <p v-else class="text-sm text-text-primary leading-relaxed select-text">
           {{ summaryResult.summary }}
         </p>
         <!-- Translation loading indicator -->

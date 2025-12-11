@@ -50,6 +50,7 @@ export function useSettings() {
     proxy_port: settingsDefaults.proxy_port,
     proxy_username: settingsDefaults.proxy_username,
     proxy_password: settingsDefaults.proxy_password,
+    google_translate_endpoint: settingsDefaults.google_translate_endpoint,
   });
 
   /**
@@ -104,6 +105,8 @@ export function useSettings() {
         proxy_port: data.proxy_port || settingsDefaults.proxy_port,
         proxy_username: data.proxy_username || settingsDefaults.proxy_username,
         proxy_password: data.proxy_password || settingsDefaults.proxy_password,
+        google_translate_endpoint:
+          data.google_translate_endpoint || settingsDefaults.google_translate_endpoint,
       };
 
       return settings.value;

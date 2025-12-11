@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supported proxy settings for network requests.
 - Supported intelligent refresh scheduling based on feed update frequency.
 - Supported customizing proxy and refresh settings per feed.
+- Supported read all articles for a specific feed or category.
+
+### Changed
+
+- Google Translate endpoint is now customizable in settings.
+
+### Fixed
+
+- Fixed the issue where title and summary can not be selected and copied in article content rendering mode.
+- Fixed the issue where some articles are rendered with incorrect formatting in article content rendering mode.
 
 ## [1.2.12] - 2025-12-10
 

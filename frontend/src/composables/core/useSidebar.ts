@@ -176,17 +176,12 @@ export function useSidebar() {
   // Category actions
   async function handleCategoryAction(action: string, categoryName: string): Promise<void> {
     if (action === 'markAllRead') {
-      let feedsInCategory;
-      if (categoryName === 'uncategorized') {
-        feedsInCategory = store.feeds.filter((f) => !f.category);
-      } else {
-        feedsInCategory = store.feeds.filter(
-          (f) => f.category === categoryName || f.category.startsWith(categoryName + '/')
-        );
-      }
-
-      const promises = feedsInCategory.map((feed) => store.markAllAsRead(feed.id));
-      await Promise.all(promises);
+      // Use the category parameter for the API call
+      const category = categoryName === 'uncategorized' ? '' : categoryName;
+      await fetch(`/api/articles/mark-all-read?category=${encodeURIComponent(category)}`, {
+        method: 'POST',
+      });
+      store.fetchUnreadCounts();
       window.showToast(t('markedAllAsRead'), 'success');
     } else if (action === 'rename') {
       const newName = await window.showInput({

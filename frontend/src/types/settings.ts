@@ -42,6 +42,7 @@ export interface SettingsData {
   proxy_port: string;
   proxy_username: string;
   proxy_password: string;
+  google_translate_endpoint: string;
   [key: string]: unknown; // Allow additional properties
 }
 

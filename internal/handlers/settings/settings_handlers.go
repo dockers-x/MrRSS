@@ -52,6 +52,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		proxyPort, _ := h.DB.GetSetting("proxy_port")
 		proxyUsername, _ := h.DB.GetSetting("proxy_username")
 		proxyPassword, _ := h.DB.GetSetting("proxy_password")
+		googleTranslateEndpoint, _ := h.DB.GetSetting("google_translate_endpoint")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":          interval,
 			"refresh_mode":             refreshMode,
@@ -88,10 +89,11 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"summary_ai_system_prompt": summaryAISystemPrompt,
 			"proxy_enabled":            proxyEnabled,
 			"proxy_type":               proxyType,
-			"proxy_host":               proxyHost,
-			"proxy_port":               proxyPort,
-			"proxy_username":           proxyUsername,
-			"proxy_password":           proxyPassword,
+			"proxy_host":                proxyHost,
+			"proxy_port":                proxyPort,
+			"proxy_username":            proxyUsername,
+			"proxy_password":            proxyPassword,
+			"google_translate_endpoint": googleTranslateEndpoint,
 		})
 	case http.MethodPost:
 		var req struct {
@@ -130,9 +132,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			ProxyEnabled          string `json:"proxy_enabled"`
 			ProxyType             string `json:"proxy_type"`
 			ProxyHost             string `json:"proxy_host"`
-			ProxyPort             string `json:"proxy_port"`
-			ProxyUsername         string `json:"proxy_username"`
-			ProxyPassword         string `json:"proxy_password"`
+			ProxyPort               string `json:"proxy_port"`
+			ProxyUsername           string `json:"proxy_username"`
+			ProxyPassword           string `json:"proxy_password"`
+			GoogleTranslateEndpoint string `json:"google_translate_endpoint"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -237,6 +240,9 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		h.DB.SetSetting("proxy_port", req.ProxyPort)
 		h.DB.SetSetting("proxy_username", req.ProxyUsername)
 		h.DB.SetSetting("proxy_password", req.ProxyPassword)
+
+		// Always update google_translate_endpoint as it might be reset to default
+		h.DB.SetSetting("google_translate_endpoint", req.GoogleTranslateEndpoint)
 
 		if req.StartupOnBoot != "" {
 			// Get current value to check if it changed

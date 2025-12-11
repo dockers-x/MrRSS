@@ -40,14 +40,34 @@ func (t *GoogleFreeTranslator) Translate(text, targetLang string) (string, error
 		return "", nil
 	}
 
-	baseURL := "https://translate.googleapis.com/translate_a/single"
+	// Get the configured endpoint, default to translate.googleapis.com
+	endpoint := "translate.googleapis.com"
+	if t.db != nil {
+		if configuredEndpoint, err := t.db.GetSetting("google_translate_endpoint"); err == nil && configuredEndpoint != "" {
+			endpoint = configuredEndpoint
+		}
+	}
+
+	// Determine which client parameter and path to use based on endpoint
+	var baseURL string
+	var clientParam string
+
+	if endpoint == "clients5.google.com" {
+		baseURL = "https://clients5.google.com/translate_a/t"
+		clientParam = "dict-chrome-ex"
+	} else {
+		// Default to translate.googleapis.com or any other endpoint
+		baseURL = "https://" + endpoint + "/translate_a/single"
+		clientParam = "gtx"
+	}
+
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return "", err
 	}
 
 	q := u.Query()
-	q.Set("client", "gtx")
+	q.Set("client", clientParam)
 	q.Set("sl", "auto")
 	q.Set("tl", targetLang)
 	q.Set("dt", "t")

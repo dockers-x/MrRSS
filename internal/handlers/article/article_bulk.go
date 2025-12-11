@@ -36,6 +36,7 @@ func HandleGetUnreadCounts(h *core.Handler, w http.ResponseWriter, r *http.Reque
 // HandleMarkAllAsRead marks all articles as read.
 func HandleMarkAllAsRead(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	feedIDStr := r.URL.Query().Get("feed_id")
+	category := r.URL.Query().Get("category")
 
 	var err error
 	if feedIDStr != "" {
@@ -46,6 +47,9 @@ func HandleMarkAllAsRead(h *core.Handler, w http.ResponseWriter, r *http.Request
 			return
 		}
 		err = h.DB.MarkAllAsReadForFeed(feedID)
+	} else if category != "" {
+		// Mark all as read for a specific category
+		err = h.DB.MarkAllAsReadForCategory(category)
 	} else {
 		// Mark all as read globally
 		err = h.DB.MarkAllAsRead()

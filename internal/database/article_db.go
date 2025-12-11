@@ -323,6 +323,24 @@ func (db *DB) MarkAllAsRead() error {
 	return err
 }
 
+// MarkAllAsReadForCategory marks all articles in a category as read.
+func (db *DB) MarkAllAsReadForCategory(category string) error {
+	db.WaitForReady()
+	// Get all feed IDs in this category
+	// Handle empty category (uncategorized) by matching NULL or empty string
+	var query string
+	if category == "" {
+		query = `UPDATE articles SET is_read = 1 
+			WHERE feed_id IN (SELECT id FROM feeds WHERE category IS NULL OR category = '') AND is_hidden = 0`
+		_, err := db.Exec(query)
+		return err
+	}
+	query = `UPDATE articles SET is_read = 1 
+		WHERE feed_id IN (SELECT id FROM feeds WHERE category = ?) AND is_hidden = 0`
+	_, err := db.Exec(query, category)
+	return err
+}
+
 // ClearReadLater removes all articles from the read later list.
 func (db *DB) ClearReadLater() error {
 	db.WaitForReady()

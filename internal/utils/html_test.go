@@ -54,7 +54,7 @@ func TestCleanHTML(t *testing.T) {
 		{
 			name:     "Complex CoolShell-like content",
 			input:    `<p--><script async src="https://example.com/ad.js"></script><img src="test.png">Content here</p>`,
-			expected: `<p><script async src="https://example.com/ad.js"></script><img src="test.png">Content here</p>`,
+			expected: `<p><img src="test.png">Content here</p>`,
 		},
 		{
 			name:     "Content with nested tags",
@@ -79,7 +79,7 @@ func TestCleanHTML(t *testing.T) {
 		{
 			name:     "Real CoolShell sample",
 			input:    `<p--><img decoding="async" loading="lazy" class="alignright" src="test.png" alt="" width="300">这两天技术圈里热议的一件事</p>`,
-			expected: `<p><img decoding="async" loading="lazy" class="alignright" src="test.png" alt="" width="300">这两天技术圈里热议的一件事</p>`,
+			expected: `<p><img decoding="async" loading="lazy" src="test.png" alt="" width="300">这两天技术圈里热议的一件事</p>`,
 		},
 		{
 			name:     "Multiple malformed tags in sequence",
@@ -141,14 +141,77 @@ func TestCleanHTML_PreservesValidHTML(t *testing.T) {
 
 	result := CleanHTML(validHTML)
 
-	// Should preserve all content and fix whitespace
+	// Should preserve all content and fix whitespace but remove class attributes
 	if !strings.Contains(result, "<h1>Title</h1>") {
 		t.Error("Valid heading tag was modified")
 	}
 	if !strings.Contains(result, `<a href="https://example.com">a link</a>`) {
 		t.Error("Valid link tag was modified")
 	}
-	if !strings.Contains(result, `<img src="image.jpg" alt="Description">`) {
-		t.Error("Valid img tag was modified")
+	if strings.Contains(result, `class="content"`) {
+		t.Error("Class attribute was not removed")
+	}
+}
+
+func TestCleanHTML_RemovesInlineStyles(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Style attribute with double quotes",
+			input:    `<p style="color: red;">Text</p>`,
+			expected: `<p>Text</p>`,
+		},
+		{
+			name:     "Style attribute with single quotes",
+			input:    `<p style='color: red;'>Text</p>`,
+			expected: `<p>Text</p>`,
+		},
+		{
+			name:     "Class attribute with double quotes",
+			input:    `<div class="container">Content</div>`,
+			expected: `<div>Content</div>`,
+		},
+		{
+			name:     "Class attribute with single quotes",
+			input:    `<div class='container'>Content</div>`,
+			expected: `<div>Content</div>`,
+		},
+		{
+			name:     "Both style and class",
+			input:    `<span class="highlight" style="font-weight: bold;">Text</span>`,
+			expected: `<span>Text</span>`,
+		},
+		{
+			name:     "Style tag removal",
+			input:    `<style>body { color: red; }</style><p>Content</p>`,
+			expected: `<p>Content</p>`,
+		},
+		{
+			name:     "Script tag removal",
+			input:    `<script>alert('test');</script><p>Content</p>`,
+			expected: `<p>Content</p>`,
+		},
+		{
+			name:     "Script with src attribute",
+			input:    `<script src="evil.js"></script><p>Content</p>`,
+			expected: `<p>Content</p>`,
+		},
+		{
+			name:     "Multiple scripts and styles",
+			input:    `<style>.test{}</style><script>var x=1;</script><p>Content</p><style>.more{}</style>`,
+			expected: `<p>Content</p>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := CleanHTML(tt.input)
+			if result != tt.expected {
+				t.Errorf("CleanHTML() = %q, want %q", result, tt.expected)
+			}
+		})
 	}
 }

@@ -49,10 +49,11 @@ type Defaults struct {
 	ProxyHost             string `json:"proxy_host"`
 	ProxyPort             string `json:"proxy_port"`
 	ProxyUsername         string `json:"proxy_username"`
-	ProxyPassword         string `json:"proxy_password"`
-	Shortcuts             string `json:"shortcuts"`
-	Rules                 string `json:"rules"`
-	LastArticleUpdate     string `json:"last_article_update"`
+	ProxyPassword           string `json:"proxy_password"`
+	Shortcuts               string `json:"shortcuts"`
+	Rules                   string `json:"rules"`
+	LastArticleUpdate       string `json:"last_article_update"`
+	GoogleTranslateEndpoint string `json:"google_translate_endpoint"`
 }
 
 var defaults Defaults
@@ -149,6 +150,8 @@ func GetString(key string) string {
 		return defaults.Rules
 	case "last_article_update":
 		return defaults.LastArticleUpdate
+	case "google_translate_endpoint":
+		return defaults.GoogleTranslateEndpoint
 	default:
 		return ""
 	}

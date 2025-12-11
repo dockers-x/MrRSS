@@ -37,5 +37,6 @@
   "proxy_password": "",
   "shortcuts": "",
   "rules": "",
-  "last_article_update": ""
+  "last_article_update": "",
+  "google_translate_endpoint": "translate.googleapis.com"
 }
