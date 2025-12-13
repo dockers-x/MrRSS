@@ -122,7 +122,11 @@ function handleDiscoverAll() {
       </div>
 
       <div class="flex-1 overflow-y-auto p-3 sm:p-6 min-h-0">
-        <GeneralTab v-if="activeTab === 'general'" :settings="settings" />
+        <GeneralTab
+          v-if="activeTab === 'general'"
+          :settings="settings"
+          @update:settings="settings = $event"
+        />
 
         <FeedsTab
           v-if="activeTab === 'feeds'"

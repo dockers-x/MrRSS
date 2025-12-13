@@ -54,6 +54,7 @@ export interface UpdateInfo {
   latest_version: string;
   download_url: string;
   asset_name: string;
+  is_portable: boolean;
   error?: string;
 }
 

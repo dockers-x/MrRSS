@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable vue/no-v-html */
 import { PhSpinnerGap, PhArticle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 
@@ -18,7 +19,6 @@ withDefaults(defineProps<Props>(), {
 <template>
   <!-- Content display with inline translations -->
   <div v-if="articleContent">
-    <!-- eslint-disable-next-line vue/no-v-html -->
     <div
       class="prose prose-sm sm:prose-lg max-w-none text-text-primary prose-content"
       v-html="articleContent"

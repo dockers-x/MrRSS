@@ -53,12 +53,12 @@ export function useSettings() {
     proxy_password: settingsDefaults.proxy_password,
     google_translate_endpoint: settingsDefaults.google_translate_endpoint,
     show_article_preview_images: settingsDefaults.show_article_preview_images,
-  });
+  } as SettingsData);
 
   /**
    * Fetch settings from backend
    */
-  async function fetchSettings() {
+  async function fetchSettings(): Promise<SettingsData> {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
@@ -112,7 +112,7 @@ export function useSettings() {
         google_translate_endpoint:
           data.google_translate_endpoint || settingsDefaults.google_translate_endpoint,
         show_article_preview_images: data.show_article_preview_images === 'true',
-      };
+      } as SettingsData;
 
       return settings.value;
     } catch (e) {

@@ -1,22 +1,25 @@
 /**
  * Composable for auto-saving settings with debouncing
  */
-import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue';
+import { ref, watch, onMounted, onUnmounted, type Ref, toRef, computed, isRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/stores/app';
 import type { SettingsData } from '@/types/settings';
 import { settingsDefaults } from '@/config/defaults';
 import { useSettingsValidation } from './useSettingsValidation';
 
-export function useSettingsAutoSave(settings: Ref<SettingsData>) {
+export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => SettingsData)) {
   const { locale } = useI18n();
   const store = useAppStore();
 
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let isInitialLoad = true;
 
+  // Convert to ref if it's a getter function
+  const settingsRef = isRef(settings) ? settings : computed(settings);
+
   // Use validation composable
-  const { isValid } = useSettingsValidation(settings);
+  const { isValid } = useSettingsValidation(settingsRef);
 
   // Track previous translation settings
   const prevTranslationSettings: Ref<{
@@ -35,9 +38,9 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
   onMounted(() => {
     setTimeout(() => {
       prevTranslationSettings.value = {
-        enabled: settings.value.translation_enabled,
-        targetLang: settings.value.target_language,
-        provider: settings.value.translation_provider,
+        enabled: settingsRef.value.translation_enabled,
+        targetLang: settingsRef.value.target_language,
+        provider: settingsRef.value.translation_provider,
       };
       isInitialLoad = false;
     }, 100);
@@ -53,129 +56,134 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
         return;
       }
 
-      // Validate settings before saving
-      if (!isValid.value) {
-        // Skip save silently - validation errors are shown in UI
-        return;
-      }
-
       // Check if translation settings changed
       const translationChanged =
-        prevTranslationSettings.value.enabled !== settings.value.translation_enabled ||
-        prevTranslationSettings.value.provider !== settings.value.translation_provider ||
-        (settings.value.translation_enabled &&
-          prevTranslationSettings.value.targetLang !== settings.value.target_language);
+        prevTranslationSettings.value.enabled !== settingsRef.value.translation_enabled ||
+        prevTranslationSettings.value.provider !== settingsRef.value.translation_provider ||
+        (settingsRef.value.translation_enabled &&
+          prevTranslationSettings.value.targetLang !== settingsRef.value.target_language);
 
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          update_interval: (
-            settings.value.update_interval ?? settingsDefaults.update_interval
-          ).toString(),
-          refresh_mode: settings.value.refresh_mode ?? settingsDefaults.refresh_mode,
-          translation_enabled: (
-            settings.value.translation_enabled ?? settingsDefaults.translation_enabled
-          ).toString(),
-          target_language: settings.value.target_language ?? settingsDefaults.target_language,
-          translation_provider:
-            settings.value.translation_provider ?? settingsDefaults.translation_provider,
-          deepl_api_key: settings.value.deepl_api_key ?? settingsDefaults.deepl_api_key,
-          baidu_app_id: settings.value.baidu_app_id ?? settingsDefaults.baidu_app_id,
-          baidu_secret_key: settings.value.baidu_secret_key ?? settingsDefaults.baidu_secret_key,
-          ai_api_key: settings.value.ai_api_key ?? settingsDefaults.ai_api_key,
-          ai_endpoint: settings.value.ai_endpoint ?? settingsDefaults.ai_endpoint,
-          ai_model: settings.value.ai_model ?? settingsDefaults.ai_model,
-          ai_system_prompt: settings.value.ai_system_prompt ?? settingsDefaults.ai_system_prompt,
-          auto_cleanup_enabled: (
-            settings.value.auto_cleanup_enabled ?? settingsDefaults.auto_cleanup_enabled
-          ).toString(),
-          max_cache_size_mb: (
-            settings.value.max_cache_size_mb ?? settingsDefaults.max_cache_size_mb
-          ).toString(),
-          max_article_age_days: (
-            settings.value.max_article_age_days ?? settingsDefaults.max_article_age_days
-          ).toString(),
-          language: settings.value.language ?? settingsDefaults.language,
-          theme: settings.value.theme ?? settingsDefaults.theme,
-          show_hidden_articles: (
-            settings.value.show_hidden_articles ?? settingsDefaults.show_hidden_articles
-          ).toString(),
-          default_view_mode: settings.value.default_view_mode ?? settingsDefaults.default_view_mode,
-          media_cache_enabled: (
-            settings.value.media_cache_enabled ?? settingsDefaults.media_cache_enabled
-          ).toString(),
-          media_cache_max_size_mb: (
-            settings.value.media_cache_max_size_mb ?? settingsDefaults.media_cache_max_size_mb
-          ).toString(),
-          media_cache_max_age_days: (
-            settings.value.media_cache_max_age_days ?? settingsDefaults.media_cache_max_age_days
-          ).toString(),
-          startup_on_boot: (
-            settings.value.startup_on_boot ?? settingsDefaults.startup_on_boot
-          ).toString(),
-          close_to_tray: (
-            settings.value.close_to_tray ?? settingsDefaults.close_to_tray
-          ).toString(),
-          shortcuts: settings.value.shortcuts ?? settingsDefaults.shortcuts,
-          summary_enabled: (
-            settings.value.summary_enabled ?? settingsDefaults.summary_enabled
-          ).toString(),
-          summary_length: settings.value.summary_length ?? settingsDefaults.summary_length,
-          summary_provider: settings.value.summary_provider ?? settingsDefaults.summary_provider,
-          summary_ai_api_key:
-            settings.value.summary_ai_api_key ?? settingsDefaults.summary_ai_api_key,
-          summary_ai_endpoint:
-            settings.value.summary_ai_endpoint ?? settingsDefaults.summary_ai_endpoint,
-          summary_ai_model: settings.value.summary_ai_model ?? settingsDefaults.summary_ai_model,
-          summary_ai_system_prompt:
-            settings.value.summary_ai_system_prompt ?? settingsDefaults.summary_ai_system_prompt,
-          proxy_enabled: (
-            settings.value.proxy_enabled ?? settingsDefaults.proxy_enabled
-          ).toString(),
-          proxy_type: settings.value.proxy_type ?? settingsDefaults.proxy_type,
-          proxy_host: settings.value.proxy_host ?? settingsDefaults.proxy_host,
-          proxy_port: settings.value.proxy_port ?? settingsDefaults.proxy_port,
-          proxy_username: settings.value.proxy_username ?? settingsDefaults.proxy_username,
-          proxy_password: settings.value.proxy_password ?? settingsDefaults.proxy_password,
-          google_translate_endpoint:
-            settings.value.google_translate_endpoint ?? settingsDefaults.google_translate_endpoint,
-          show_article_preview_images: (
-            settings.value.show_article_preview_images ??
-            settingsDefaults.show_article_preview_images
-          ).toString(),
-        }),
-      });
-
-      // Apply settings immediately
-      locale.value = settings.value.language;
-      store.setTheme(settings.value.theme as 'light' | 'dark' | 'auto');
-      store.startAutoRefresh(settings.value.update_interval);
+      // Always apply basic settings immediately (theme, language, etc.)
+      // even if validation fails - these don't require API keys
+      locale.value = settingsRef.value.language;
+      store.setTheme(settingsRef.value.theme as 'light' | 'dark' | 'auto');
+      store.startAutoRefresh(settingsRef.value.update_interval);
 
       // Notify components about default view mode change
       window.dispatchEvent(
         new CustomEvent('default-view-mode-changed', {
           detail: {
-            mode: settings.value.default_view_mode,
+            mode: settingsRef.value.default_view_mode,
           },
         })
       );
+
+      // Validate settings before saving to backend
+      if (!isValid.value) {
+        // Skip save to backend if validation fails
+        // But basic settings have already been applied above
+        return;
+      }
+
+      // Save to backend
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          update_interval: (
+            settingsRef.value.update_interval ?? settingsDefaults.update_interval
+          ).toString(),
+          refresh_mode: settingsRef.value.refresh_mode ?? settingsDefaults.refresh_mode,
+          translation_enabled: (
+            settingsRef.value.translation_enabled ?? settingsDefaults.translation_enabled
+          ).toString(),
+          target_language: settingsRef.value.target_language ?? settingsDefaults.target_language,
+          translation_provider:
+            settingsRef.value.translation_provider ?? settingsDefaults.translation_provider,
+          deepl_api_key: settingsRef.value.deepl_api_key ?? settingsDefaults.deepl_api_key,
+          baidu_app_id: settingsRef.value.baidu_app_id ?? settingsDefaults.baidu_app_id,
+          baidu_secret_key: settingsRef.value.baidu_secret_key ?? settingsDefaults.baidu_secret_key,
+          ai_api_key: settingsRef.value.ai_api_key ?? settingsDefaults.ai_api_key,
+          ai_endpoint: settingsRef.value.ai_endpoint ?? settingsDefaults.ai_endpoint,
+          ai_model: settingsRef.value.ai_model ?? settingsDefaults.ai_model,
+          ai_system_prompt: settingsRef.value.ai_system_prompt ?? settingsDefaults.ai_system_prompt,
+          auto_cleanup_enabled: (
+            settingsRef.value.auto_cleanup_enabled ?? settingsDefaults.auto_cleanup_enabled
+          ).toString(),
+          max_cache_size_mb: (
+            settingsRef.value.max_cache_size_mb ?? settingsDefaults.max_cache_size_mb
+          ).toString(),
+          max_article_age_days: (
+            settingsRef.value.max_article_age_days ?? settingsDefaults.max_article_age_days
+          ).toString(),
+          language: settingsRef.value.language ?? settingsDefaults.language,
+          theme: settingsRef.value.theme ?? settingsDefaults.theme,
+          show_hidden_articles: (
+            settingsRef.value.show_hidden_articles ?? settingsDefaults.show_hidden_articles
+          ).toString(),
+          default_view_mode:
+            settingsRef.value.default_view_mode ?? settingsDefaults.default_view_mode,
+          media_cache_enabled: (
+            settingsRef.value.media_cache_enabled ?? settingsDefaults.media_cache_enabled
+          ).toString(),
+          media_cache_max_size_mb: (
+            settingsRef.value.media_cache_max_size_mb ?? settingsDefaults.media_cache_max_size_mb
+          ).toString(),
+          media_cache_max_age_days: (
+            settingsRef.value.media_cache_max_age_days ?? settingsDefaults.media_cache_max_age_days
+          ).toString(),
+          startup_on_boot: (
+            settingsRef.value.startup_on_boot ?? settingsDefaults.startup_on_boot
+          ).toString(),
+          close_to_tray: (
+            settingsRef.value.close_to_tray ?? settingsDefaults.close_to_tray
+          ).toString(),
+          shortcuts: settingsRef.value.shortcuts ?? settingsDefaults.shortcuts,
+          summary_enabled: (
+            settingsRef.value.summary_enabled ?? settingsDefaults.summary_enabled
+          ).toString(),
+          summary_length: settingsRef.value.summary_length ?? settingsDefaults.summary_length,
+          summary_provider: settingsRef.value.summary_provider ?? settingsDefaults.summary_provider,
+          summary_ai_api_key:
+            settingsRef.value.summary_ai_api_key ?? settingsDefaults.summary_ai_api_key,
+          summary_ai_endpoint:
+            settingsRef.value.summary_ai_endpoint ?? settingsDefaults.summary_ai_endpoint,
+          summary_ai_model: settingsRef.value.summary_ai_model ?? settingsDefaults.summary_ai_model,
+          summary_ai_system_prompt:
+            settingsRef.value.summary_ai_system_prompt ?? settingsDefaults.summary_ai_system_prompt,
+          proxy_enabled: (
+            settingsRef.value.proxy_enabled ?? settingsDefaults.proxy_enabled
+          ).toString(),
+          proxy_type: settingsRef.value.proxy_type ?? settingsDefaults.proxy_type,
+          proxy_host: settingsRef.value.proxy_host ?? settingsDefaults.proxy_host,
+          proxy_port: settingsRef.value.proxy_port ?? settingsDefaults.proxy_port,
+          proxy_username: settingsRef.value.proxy_username ?? settingsDefaults.proxy_username,
+          proxy_password: settingsRef.value.proxy_password ?? settingsDefaults.proxy_password,
+          google_translate_endpoint:
+            settingsRef.value.google_translate_endpoint ??
+            settingsDefaults.google_translate_endpoint,
+          show_article_preview_images: (
+            settingsRef.value.show_article_preview_images ??
+            settingsDefaults.show_article_preview_images
+          ).toString(),
+        }),
+      });
 
       // Clear and re-translate if translation settings changed
       if (translationChanged) {
         await fetch('/api/articles/clear-translations', { method: 'POST' });
         // Update tracking
         prevTranslationSettings.value = {
-          enabled: settings.value.translation_enabled,
-          targetLang: settings.value.target_language,
-          provider: settings.value.translation_provider,
+          enabled: settingsRef.value.translation_enabled,
+          targetLang: settingsRef.value.target_language,
+          provider: settingsRef.value.translation_provider,
         };
         // Notify ArticleList about translation settings change
         window.dispatchEvent(
           new CustomEvent('translation-settings-changed', {
             detail: {
-              enabled: settings.value.translation_enabled,
-              targetLang: settings.value.target_language,
+              enabled: settingsRef.value.translation_enabled,
+              targetLang: settingsRef.value.target_language,
             },
           })
         );
@@ -184,7 +192,7 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
       }
 
       // Refresh articles if show_hidden_articles changed
-      if (settings.value.show_hidden_articles !== undefined) {
+      if (settingsRef.value.show_hidden_articles !== undefined) {
         store.fetchArticles();
       }
 
@@ -192,7 +200,7 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
       window.dispatchEvent(
         new CustomEvent('show-preview-images-changed', {
           detail: {
-            value: settings.value.show_article_preview_images,
+            value: settingsRef.value.show_article_preview_images,
           },
         })
       );
@@ -212,7 +220,7 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
   }
 
   // Watch the entire settings object for changes
-  watch(() => settings.value, debouncedAutoSave, { deep: true });
+  watch(() => settingsRef.value, debouncedAutoSave, { deep: true });
 
   // Clean up timeout on unmount to prevent memory leaks
   onUnmounted(() => {

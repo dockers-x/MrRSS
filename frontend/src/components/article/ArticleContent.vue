@@ -35,6 +35,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showTranslations: true,
+  attachImageEventListeners: undefined,
 });
 
 const { t } = useI18n();

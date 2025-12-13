@@ -127,37 +127,70 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 	var assetSize int64
 	platform := runtime.GOOS
 	arch := runtime.GOARCH
+	isPortable := utils.IsPortableMode()
 
 	for _, asset := range release.Assets {
 		name := strings.ToLower(asset.Name)
 
 		// Match platform-specific installer/package with architecture
-		// Asset naming convention: MrRSS-{version}-{platform}-{arch}-installer.{ext}
+		// Asset naming convention:
+		//   Installer: MrRSS-{version}-{platform}-{arch}-installer.{ext}
+		//   Portable: MrRSS-{version}-{platform}-{arch}-portable.{ext}
 		platformArch := platform + "-" + arch
 
 		if platform == "windows" {
-			// For Windows, prefer installer.exe, fallback to .zip
-			if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-installer.exe") {
-				downloadURL = asset.BrowserDownloadURL
-				assetName = asset.Name
-				assetSize = asset.Size
-				break
+			if isPortable {
+				// For portable Windows, download .zip
+				if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-portable.zip") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
+			} else {
+				// For installed Windows, prefer installer.exe
+				if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-installer.exe") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
 			}
 		} else if platform == "linux" {
-			// For Linux, prefer .AppImage, fallback to .tar.gz
-			if strings.Contains(name, platformArch) && strings.HasSuffix(name, ".appimage") {
-				downloadURL = asset.BrowserDownloadURL
-				assetName = asset.Name
-				assetSize = asset.Size
-				break
+			if isPortable {
+				// For portable Linux, download .tar.gz
+				if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-portable.tar.gz") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
+			} else {
+				// For installed Linux, prefer .AppImage
+				if strings.Contains(name, platformArch) && strings.HasSuffix(name, ".appimage") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
 			}
 		} else if platform == "darwin" {
-			// For macOS, use universal build (supports both arm64 and amd64)
-			if strings.Contains(name, "darwin-universal") && strings.HasSuffix(name, ".dmg") {
-				downloadURL = asset.BrowserDownloadURL
-				assetName = asset.Name
-				assetSize = asset.Size
-				break
+			if isPortable {
+				// For portable macOS, download .zip
+				if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-portable.zip") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
+			} else {
+				// For installed macOS, use universal build DMG
+				if strings.Contains(name, "darwin-universal") && strings.HasSuffix(name, ".dmg") {
+					downloadURL = asset.BrowserDownloadURL
+					assetName = asset.Name
+					assetSize = asset.Size
+					break
+				}
 			}
 		}
 	}
@@ -168,6 +201,7 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		"has_update":      hasUpdate,
 		"platform":        platform,
 		"arch":            arch,
+		"is_portable":     isPortable,
 	}
 
 	if downloadURL != "" {

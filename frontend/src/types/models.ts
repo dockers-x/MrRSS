@@ -53,6 +53,7 @@ export interface UpdateInfo {
   current_version: string;
   download_url: string;
   release_notes: string;
+  is_portable: boolean;
 }
 
 export interface Settings {

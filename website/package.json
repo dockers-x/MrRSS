@@ -11,9 +11,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.18",
     "autoprefixer": "^10.4.22",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^3.4.17",
     "vue": "^3.5.25",
     "vue-i18n": "^11.2.2"
   },

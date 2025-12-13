@@ -25,13 +25,9 @@ import {
   PhFunnel,
 } from '@phosphor-icons/vue';
 import ShortcutItem from './ShortcutItem.vue';
+import type { SettingsData } from '@/types/settings';
 
 const { t } = useI18n();
-
-interface SettingsData {
-  shortcuts: string;
-  [key: string]: unknown;
-}
 
 interface Props {
   settings: SettingsData;

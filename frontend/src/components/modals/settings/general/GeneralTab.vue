@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toRef } from 'vue';
+import { computed } from 'vue';
 import type { SettingsData } from '@/types/settings';
 import { useSettingsAutoSave } from '@/composables/core/useSettingsAutoSave';
 import { useSettingsValidation } from '@/composables/core/useSettingsValidation';
@@ -23,13 +23,22 @@ const emit = defineEmits<{
   'update:settings': [settings: SettingsData];
 }>();
 
+// Create a computed ref that returns the settings object
+// This ensures reactivity while allowing modifications
+const settingsRef = computed(() => props.settings);
+
 // Use composable for auto-save with reactivity
-const settingsRef = toRef(props, 'settings');
 useSettingsAutoSave(settingsRef);
 
 // Use validation composable
 const { isValid, isTranslationValid, isSummaryValid, isProxyValid } =
   useSettingsValidation(settingsRef);
+
+// Handler for settings updates from child components
+function handleUpdateSettings(updatedSettings: SettingsData) {
+  // Emit the updated settings to parent
+  emit('update:settings', updatedSettings);
+}
 </script>
 
 <template>
@@ -60,17 +69,17 @@ const { isValid, isTranslationValid, isSummaryValid, isProxyValid } =
       </div>
     </div>
 
-    <AppearanceSettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <AppearanceSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
-    <UpdateSettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <UpdateSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
-    <ProxySettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <ProxySettings :settings="settings" @update:settings="handleUpdateSettings" />
 
-    <DatabaseSettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <DatabaseSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
-    <TranslationSettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <TranslationSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
-    <SummarySettings :settings="settings" @update:settings="emit('update:settings', $event)" />
+    <SummarySettings :settings="settings" @update:settings="handleUpdateSettings" />
   </div>
 </template>
 

@@ -6,6 +6,7 @@ import { PhLightning, PhPlus } from '@phosphor-icons/vue';
 import RuleEditorModal from '../../rules/RuleEditorModal.vue';
 import RuleItem from './RuleItem.vue';
 import type { Condition } from '@/composables/rules/useRuleOptions';
+import type { SettingsData } from '@/types/settings';
 
 const store = useAppStore();
 const { t } = useI18n();
@@ -16,11 +17,6 @@ interface Rule {
   enabled: boolean;
   conditions: Condition[];
   actions: string[];
-}
-
-interface SettingsData {
-  rules: string;
-  [key: string]: unknown;
 }
 
 interface Props {

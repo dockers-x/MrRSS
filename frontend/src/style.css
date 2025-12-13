@@ -1,44 +1,37 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-bg-tertiary: var(--bg-tertiary);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-accent: var(--accent-color);
-  --color-accent-hover: var(--accent-hover);
-  --color-border: var(--border-color);
-}
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-color: #007bff;
+    --accent-hover: #0056b3;
+    --border-color: #dee2e6;
+    --mark-bg-color: rgba(255, 220, 100, 0.4);
+    --table-stripe-color: rgba(0, 0, 0, 0.04);
+    --code-bg-color: #f6f8fa;
+    --code-border-color: #d1d9e0;
+  }
 
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --accent-color: #007bff;
-  --accent-hover: #0056b3;
-  --border-color: #dee2e6;
-  --mark-bg-color: rgba(255, 220, 100, 0.4);
-  --table-stripe-color: rgba(0, 0, 0, 0.04);
-  --code-bg-color: #f6f8fa;
-  --code-border-color: #d1d9e0;
-}
-
-.dark-mode {
-  --bg-primary: #1e1e1e;
-  --bg-secondary: #252526;
-  --bg-tertiary: #2d2d2d;
-  --text-primary: #e0e0e0;
-  --text-secondary: #a0a0a0;
-  --accent-color: #4daafc;
-  --accent-hover: #2b87d9;
-  --border-color: #3e3e42;
-  --mark-bg-color: rgba(255, 220, 100, 0.25);
-  --table-stripe-color: rgba(255, 255, 255, 0.06);
-  --code-bg-color: #1e1e1e;
-  --code-border-color: #3e3e42;
+  .dark-mode {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d2d;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --accent-color: #4daafc;
+    --accent-hover: #2b87d9;
+    --border-color: #3e3e42;
+    --mark-bg-color: rgba(255, 220, 100, 0.25);
+    --table-stripe-color: rgba(255, 255, 255, 0.06);
+    --code-bg-color: #1e1e1e;
+    --code-border-color: #3e3e42;
+  }
 }
 
 body {
