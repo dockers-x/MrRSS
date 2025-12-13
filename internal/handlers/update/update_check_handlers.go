@@ -13,7 +13,8 @@ import (
 	"MrRSS/internal/version"
 )
 
-// HandleCheckUpdates checks for the latest version on GitHub.
+// HandleCheckUpdates checks for the latest stable version on GitHub.
+// Pre-release versions (alpha, beta) are filtered out.
 func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -21,7 +22,8 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 	}
 
 	currentVersion := version.Version
-	const githubAPI = "https://api.github.com/repos/WCY-dt/MrRSS/releases/latest"
+	// Use /releases endpoint to get all releases, then filter for stable versions
+	const githubAPI = "https://api.github.com/repos/WCY-dt/MrRSS/releases"
 
 	// Create HTTP client with global proxy support
 	var proxyURL string
@@ -61,17 +63,19 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		log.Printf("GitHub API returned status: %d", resp.StatusCode)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"current_version": currentVersion,
-			"error":           "Failed to fetch latest release",
+			"error":           "Failed to fetch releases",
 		})
 		return
 	}
 
-	var release struct {
+	type Release struct {
 		TagName     string `json:"tag_name"`
 		Name        string `json:"name"`
 		HTMLURL     string `json:"html_url"`
 		Body        string `json:"body"`
 		PublishedAt string `json:"published_at"`
+		Prerelease  bool   `json:"prerelease"`
+		Draft       bool   `json:"draft"`
 		Assets      []struct {
 			Name               string `json:"name"`
 			BrowserDownloadURL string `json:"browser_download_url"`
@@ -79,8 +83,9 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		} `json:"assets"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		log.Printf("Error decoding release info: %v", err)
+	var releases []Release
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		log.Printf("Error decoding releases info: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"current_version": currentVersion,
 			"error":           "Failed to parse release information",
@@ -88,8 +93,32 @@ func HandleCheckUpdates(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Remove 'v' prefix if present for comparison
-	latestVersion := strings.TrimPrefix(release.TagName, "v")
+	// Find the latest stable release (not prerelease, not draft)
+	// Compare versions to ensure we get the actual latest, not just the first one
+	var release Release
+	var latestVersion string
+	found := false
+	for _, r := range releases {
+		if !r.Prerelease && !r.Draft {
+			version := strings.TrimPrefix(r.TagName, "v")
+			if !found || compareVersions(version, latestVersion) > 0 {
+				release = r
+				latestVersion = version
+				found = true
+			}
+		}
+	}
+
+	if !found {
+		log.Printf("No stable releases found")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"current_version": currentVersion,
+			"error":           "No stable release available",
+		})
+		return
+	}
+
+	// Check if there's an update available
 	hasUpdate := compareVersions(latestVersion, currentVersion) > 0
 
 	// Find the appropriate download URL based on platform

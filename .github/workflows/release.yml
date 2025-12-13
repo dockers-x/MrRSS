@@ -30,6 +30,16 @@ jobs:
           VERSION="${VERSION#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if this is a pre-release (alpha or beta)
+          # Match versions like 1.2.3-alpha, 1.2.3-alpha.1, 1.2.3-beta, 1.2.3-beta.2
+          if [[ "$VERSION" =~ -(alpha|beta)($|\.) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "This is a pre-release version: $VERSION"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "This is a stable release version: $VERSION"
+          fi
 
       - name: Update version in wails.json
         run: |
@@ -107,7 +117,8 @@ jobs:
           name: MrRSS ${{ steps.get_version.outputs.tag }}
           body_path: RELEASE_NOTES.md
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.get_version.outputs.is_prerelease == 'true' }}
+          make_latest: ${{ steps.get_version.outputs.is_prerelease == 'false' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   build-release:
