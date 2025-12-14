@@ -111,10 +111,8 @@ func (d *Detector) testLatency(ctx context.Context) (int64, error) {
 		totalLatency += latency
 		successCount++
 
-		// If we get at least one successful test, that's enough
-		if successCount >= 1 {
-			break
-		}
+		// One successful test is enough
+		break
 	}
 
 	if successCount == 0 {

@@ -7,9 +7,9 @@ import (
 	"MrRSS/internal/translation"
 	"MrRSS/internal/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -71,8 +71,8 @@ func (f *Fetcher) getConcurrencyLimit() int {
 		return 5 // Default concurrency
 	}
 	
-	var concurrency int
-	if _, err := fmt.Sscanf(concurrencyStr, "%d", &concurrency); err != nil || concurrency < 1 {
+	concurrency, err := strconv.Atoi(concurrencyStr)
+	if err != nil || concurrency < 1 {
 		return 5 // Default on parse error or invalid value
 	}
 	

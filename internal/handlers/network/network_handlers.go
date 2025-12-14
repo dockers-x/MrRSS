@@ -47,9 +47,20 @@ func HandleGetNetworkInfo(h *core.Handler, w http.ResponseWriter, r *http.Reques
 	concurrencyStr, _ := h.DB.GetSetting("max_concurrent_refreshes")
 	lastTestStr, _ := h.DB.GetSetting("last_network_test")
 
-	bandwidth, _ := strconv.ParseFloat(bandwidthStr, 64)
-	latency, _ := strconv.ParseInt(latencyStr, 10, 64)
-	concurrency, _ := strconv.Atoi(concurrencyStr)
+	bandwidth, err := strconv.ParseFloat(bandwidthStr, 64)
+	if err != nil {
+		bandwidth = 0
+	}
+	
+	latency, err := strconv.ParseInt(latencyStr, 10, 64)
+	if err != nil {
+		latency = 0
+	}
+	
+	concurrency, err := strconv.Atoi(concurrencyStr)
+	if err != nil || concurrency < 1 {
+		concurrency = 5 // Default
+	}
 
 	var lastTest time.Time
 	if lastTestStr != "" {
