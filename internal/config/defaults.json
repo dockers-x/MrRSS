@@ -45,5 +45,10 @@
   "window_width": "1024",
   "window_height": "768",
   "window_maximized": "false",
-  "show_article_preview_images": true
+  "show_article_preview_images": true,
+  "network_speed": "medium",
+  "network_bandwidth_mbps": "0",
+  "network_latency_ms": "0",
+  "max_concurrent_refreshes": "5",
+  "last_network_test": ""
 }

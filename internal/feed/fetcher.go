@@ -7,6 +7,7 @@ import (
 	"MrRSS/internal/translation"
 	"MrRSS/internal/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -60,6 +61,27 @@ func (f *Fetcher) GetIntelligentRefreshCalculator() *IntelligentRefreshCalculato
 // GetStaggeredDelay calculates a staggered delay for feed refresh
 func (f *Fetcher) GetStaggeredDelay(feedID int64, totalFeeds int) time.Duration {
 	return GetStaggeredDelay(feedID, totalFeeds)
+}
+
+// getConcurrencyLimit returns the maximum number of concurrent feed refreshes
+// based on network detection or defaults to 5 if not configured
+func (f *Fetcher) getConcurrencyLimit() int {
+	concurrencyStr, err := f.db.GetSetting("max_concurrent_refreshes")
+	if err != nil || concurrencyStr == "" {
+		return 5 // Default concurrency
+	}
+	
+	var concurrency int
+	if _, err := fmt.Sscanf(concurrencyStr, "%d", &concurrency); err != nil || concurrency < 1 {
+		return 5 // Default on parse error or invalid value
+	}
+	
+	// Cap at reasonable limits
+	if concurrency > 20 {
+		concurrency = 20
+	}
+	
+	return concurrency
 }
 
 // getHTTPClient returns an HTTP client configured with proxy if needed
@@ -163,7 +185,8 @@ func (f *Fetcher) FetchAll(ctx context.Context) {
 	f.mu.Unlock()
 
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, 5) // Limit concurrency
+	concurrency := f.getConcurrencyLimit()
+	sem := make(chan struct{}, concurrency) // Limit concurrency based on network speed
 
 	for _, feed := range feeds {
 		// Check for cancellation
@@ -378,7 +401,8 @@ func (f *Fetcher) FetchFeedsByIDs(ctx context.Context, feedIDs []int64) {
 	f.setupTranslator()
 
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, 5) // Limit concurrency
+	concurrency := f.getConcurrencyLimit()
+	sem := make(chan struct{}, concurrency) // Limit concurrency based on network speed
 
 	for _, feedID := range feedIDs {
 		// Check for cancellation

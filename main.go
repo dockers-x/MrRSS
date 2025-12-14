@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,6 +26,7 @@ import (
 	discovery "MrRSS/internal/handlers/discovery"
 	feedhandlers "MrRSS/internal/handlers/feed"
 	media "MrRSS/internal/handlers/media"
+	networkhandlers "MrRSS/internal/handlers/network"
 	opml "MrRSS/internal/handlers/opml"
 	rules "MrRSS/internal/handlers/rules"
 	script "MrRSS/internal/handlers/script"
@@ -32,6 +35,7 @@ import (
 	translationhandlers "MrRSS/internal/handlers/translation"
 	update "MrRSS/internal/handlers/update"
 	window "MrRSS/internal/handlers/window"
+	"MrRSS/internal/network"
 	"MrRSS/internal/translation"
 	"MrRSS/internal/tray"
 	"MrRSS/internal/utils"
@@ -182,6 +186,8 @@ func main() {
 	apiMux.HandleFunc("/api/media/info", func(w http.ResponseWriter, r *http.Request) { media.HandleMediaCacheInfo(h, w, r) })
 	apiMux.HandleFunc("/api/window/state", func(w http.ResponseWriter, r *http.Request) { window.HandleGetWindowState(h, w, r) })
 	apiMux.HandleFunc("/api/window/save", func(w http.ResponseWriter, r *http.Request) { window.HandleSaveWindowState(h, w, r) })
+	apiMux.HandleFunc("/api/network/detect", func(w http.ResponseWriter, r *http.Request) { networkhandlers.HandleDetectNetwork(h, w, r) })
+	apiMux.HandleFunc("/api/network/info", func(w http.ResponseWriter, r *http.Request) { networkhandlers.HandleGetNetworkInfo(h, w, r) })
 
 	// Static Files
 	log.Println("Setting up static files...")
@@ -283,6 +289,26 @@ func main() {
 			if shouldCloseToTray() {
 				startTray(ctx)
 			}
+
+			// Detect network speed on startup in background
+			go func() {
+				log.Println("Detecting network speed...")
+				detector := network.NewDetector()
+				detectCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				
+				result := detector.DetectSpeed(detectCtx)
+				if result.DetectionSuccess {
+					db.SetSetting("network_speed", string(result.SpeedLevel))
+					db.SetSetting("network_bandwidth_mbps", fmt.Sprintf("%.2f", result.BandwidthMbps))
+					db.SetSetting("network_latency_ms", strconv.FormatInt(result.LatencyMs, 10))
+					db.SetSetting("max_concurrent_refreshes", strconv.Itoa(result.MaxConcurrency))
+					db.SetSetting("last_network_test", result.DetectionTime.Format(time.RFC3339))
+					log.Printf("Network detection complete: %s (max concurrency: %d)", result.SpeedLevel, result.MaxConcurrency)
+				} else {
+					log.Printf("Network detection failed: %s", result.ErrorMessage)
+				}
+			}()
 
 			// Start background scheduler after a longer delay to allow UI to show first
 			go func() {
