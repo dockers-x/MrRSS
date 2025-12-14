@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhWarningCircle, PhEyeSlash } from '@phosphor-icons/vue';
+import { PhWarningCircle, PhEyeSlash, PhImage } from '@phosphor-icons/vue';
 import type { Feed } from '@/types/models';
 import { useI18n } from 'vue-i18n';
 
@@ -41,6 +41,12 @@ function getFavicon(url: string): string {
       />
     </div>
     <span class="truncate flex-1">{{ feed.title }}</span>
+    <PhImage
+      v-if="feed.is_image_mode"
+      :size="16"
+      class="text-accent shrink-0"
+      :title="t('imageMode')"
+    />
     <PhEyeSlash
       v-if="feed.hide_from_timeline"
       :size="16"

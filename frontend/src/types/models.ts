@@ -34,6 +34,7 @@ export interface Feed {
   proxy_url?: string;
   proxy_enabled?: boolean;
   refresh_interval?: number;
+  is_image_mode?: boolean;
 }
 
 export interface UnreadCounts {

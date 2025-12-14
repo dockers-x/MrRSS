@@ -9,6 +9,9 @@ import { useAppStore } from '@/stores/app';
 const { t } = useI18n();
 const store = useAppStore();
 
+// Check if image gallery feature is enabled
+const imageGalleryEnabled = ref(false);
+
 type FeedType = 'url' | 'script';
 type ProxyMode = 'global' | 'custom' | 'none';
 type RefreshMode = 'global' | 'fixed' | 'intelligent' | 'custom';
@@ -32,6 +35,7 @@ const categorySelection = ref('');
 const showCustomCategory = ref(false);
 const scriptPath = ref('');
 const hideFromTimeline = ref(false);
+const isImageMode = ref(false);
 
 // Proxy settings
 const proxyMode = ref<ProxyMode>('global');
@@ -83,6 +87,28 @@ onMounted(async () => {
   category.value = props.feed.category;
   scriptPath.value = props.feed.script_path || '';
   hideFromTimeline.value = props.feed.hide_from_timeline || false;
+  isImageMode.value = props.feed.is_image_mode || false;
+
+  // Load image gallery enabled setting
+  async function loadImageGallerySetting() {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        imageGalleryEnabled.value = data.image_gallery_enabled === 'true';
+      }
+    } catch (e) {
+      console.error('Failed to load settings:', e);
+    }
+  }
+  
+  await loadImageGallerySetting();
+  
+  // Listen for settings changes
+  window.addEventListener('image-gallery-setting-changed', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    imageGalleryEnabled.value = customEvent.detail.enabled;
+  });
 
   // Initialize proxy settings
   if (props.feed.proxy_url) {
@@ -197,6 +223,7 @@ async function save() {
       title: title.value,
       category: category.value,
       hide_from_timeline: hideFromTimeline.value,
+      is_image_mode: isImageMode.value,
       refresh_interval: getRefreshInterval(),
     };
 
@@ -402,6 +429,21 @@ async function openScriptsFolder() {
 
         <!-- Advanced Settings Section (Collapsible) -->
         <div v-if="showAdvancedSettings" class="mb-3 sm:mb-4 space-y-3 sm:space-y-4">
+          <!-- Image Mode Toggle (only shown if image gallery is enabled) -->
+          <div v-if="imageGalleryEnabled" class="p-3 rounded-lg bg-bg-secondary border border-border">
+            <label class="flex items-center justify-between cursor-pointer">
+              <div>
+                <span class="font-semibold text-xs sm:text-sm text-text-primary">{{
+                  t('imageMode')
+                }}</span>
+                <p class="text-[10px] sm:text-xs text-text-secondary mt-0.5">
+                  {{ t('imageModeDesc') }}
+                </p>
+              </div>
+              <input v-model="isImageMode" type="checkbox" class="toggle" />
+            </label>
+          </div>
+
           <!-- Hide from Timeline Toggle -->
           <div class="p-3 rounded-lg bg-bg-secondary border border-border">
             <label class="flex items-center justify-between cursor-pointer">

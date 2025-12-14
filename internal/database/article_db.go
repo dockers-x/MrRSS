@@ -68,18 +68,20 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 	switch filter {
 	case "unread":
 		whereClauses = append(whereClauses, "a.is_read = 0")
-		// Exclude feeds marked as hide_from_timeline when viewing unread (unless specific feed/category selected)
+		// Exclude feeds marked as hide_from_timeline or is_image_mode when viewing unread (unless specific feed/category selected)
 		if feedID <= 0 && category == "" {
 			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
+			whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 		}
 	case "favorites":
 		whereClauses = append(whereClauses, "a.is_favorite = 1")
 	case "readLater":
 		whereClauses = append(whereClauses, "a.is_read_later = 1")
 	case "all":
-		// Exclude feeds marked as hide_from_timeline when viewing all articles (unless specific feed/category selected)
+		// Exclude feeds marked as hide_from_timeline or is_image_mode when viewing all articles (unless specific feed/category selected)
 		if feedID <= 0 && category == "" {
 			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
+			whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 		}
 	}
 
@@ -92,6 +94,8 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 		// Simple prefix match for category hierarchy
 		whereClauses = append(whereClauses, "(f.category = ? OR f.category LIKE ?)")
 		args = append(args, category, category+"/%")
+		// Exclude image mode feeds when viewing category
+		whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 	}
 
 	query := baseQuery
@@ -346,4 +350,56 @@ func (db *DB) ClearReadLater() error {
 	db.WaitForReady()
 	_, err := db.Exec("UPDATE articles SET is_read_later = 0 WHERE is_read_later = 1")
 	return err
+}
+
+// GetImageGalleryArticles retrieves articles from image mode feeds with pagination.
+// If feedID is provided, it gets articles only from that feed (assuming it's an image mode feed).
+// Otherwise, it gets articles from all image mode feeds.
+func (db *DB) GetImageGalleryArticles(feedID int64, showHidden bool, limit, offset int) ([]models.Article, error) {
+	db.WaitForReady()
+	baseQuery := `
+		SELECT a.id, a.feed_id, a.title, a.url, a.image_url, a.audio_url, a.video_url, a.published_at, a.is_read, a.is_favorite, a.is_hidden, a.is_read_later, a.translated_title, f.title
+		FROM articles a
+		JOIN feeds f ON a.feed_id = f.id
+		WHERE COALESCE(f.is_image_mode, 0) = 1
+	`
+	var args []interface{}
+
+	// Always filter hidden articles unless showHidden is true
+	if !showHidden {
+		baseQuery += " AND a.is_hidden = 0"
+	}
+
+	// Only get articles with image_url
+	baseQuery += " AND a.image_url IS NOT NULL AND a.image_url != ''"
+
+	if feedID > 0 {
+		baseQuery += " AND a.feed_id = ?"
+		args = append(args, feedID)
+	}
+
+	baseQuery += " ORDER BY a.published_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := db.Query(baseQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var articles []models.Article
+	for rows.Next() {
+		var a models.Article
+		var imageURL, audioURL, videoURL, translatedTitle sql.NullString
+		if err := rows.Scan(&a.ID, &a.FeedID, &a.Title, &a.URL, &imageURL, &audioURL, &videoURL, &a.PublishedAt, &a.IsRead, &a.IsFavorite, &a.IsHidden, &a.IsReadLater, &translatedTitle, &a.FeedTitle); err != nil {
+			log.Println("Error scanning article:", err)
+			continue
+		}
+		a.ImageURL = imageURL.String
+		a.AudioURL = audioURL.String
+		a.VideoURL = videoURL.String
+		a.TranslatedTitle = translatedTitle.String
+		articles = append(articles, a)
+	}
+	return articles, nil
 }

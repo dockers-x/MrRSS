@@ -50,6 +50,7 @@ export interface SettingsData {
   network_latency_ms: string;
   max_concurrent_refreshes: string;
   last_network_test: string;
+  image_gallery_enabled: boolean;
   [key: string]: unknown; // Allow additional properties
 }
 

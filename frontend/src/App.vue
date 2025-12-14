@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import Sidebar from './components/sidebar/Sidebar.vue';
 import ArticleList from './components/article/ArticleList.vue';
 import ArticleDetail from './components/article/ArticleDetail.vue';
+import ImageGalleryView from './components/article/ImageGalleryView.vue';
 import AddFeedModal from './components/modals/feed/AddFeedModal.vue';
 import EditFeedModal from './components/modals/feed/EditFeedModal.vue';
 import SettingsModal from './components/modals/SettingsModal.vue';
@@ -12,7 +13,7 @@ import ContextMenu from './components/common/ContextMenu.vue';
 import ConfirmDialog from './components/modals/common/ConfirmDialog.vue';
 import InputDialog from './components/modals/common/InputDialog.vue';
 import Toast from './components/common/Toast.vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useNotifications } from './composables/ui/useNotifications';
 import { useKeyboardShortcuts } from './composables/ui/useKeyboardShortcuts';
 import { useContextMenu } from './composables/ui/useContextMenu';
@@ -30,6 +31,9 @@ const showSettings = ref(false);
 const showDiscoverBlogs = ref(false);
 const feedToDiscover = ref<Feed | null>(null);
 const isSidebarOpen = ref(false);
+
+// Check if we're in image gallery mode
+const isImageGalleryMode = computed(() => store.currentFilter === 'imageGallery');
 
 // Use composables
 const { confirmDialog, inputDialog, toasts, removeToast, installGlobalHandlers } =
@@ -183,11 +187,19 @@ function onFeedUpdated(): void {
 
     <div class="resizer hidden md:block" @mousedown="startResizeSidebar"></div>
 
-    <ArticleList :is-sidebar-open="isSidebarOpen" @toggle-sidebar="toggleSidebar" />
+    <!-- Show ImageGalleryView when in image gallery mode -->
+    <template v-if="isImageGalleryMode">
+      <ImageGalleryView :is-sidebar-open="isSidebarOpen" @toggle-sidebar="toggleSidebar" />
+    </template>
 
-    <div class="resizer hidden md:block" @mousedown="startResizeArticleList"></div>
+    <!-- Show ArticleList and ArticleDetail when not in image gallery mode -->
+    <template v-else>
+      <ArticleList :is-sidebar-open="isSidebarOpen" @toggle-sidebar="toggleSidebar" />
 
-    <ArticleDetail />
+      <div class="resizer hidden md:block" @mousedown="startResizeArticleList"></div>
+
+      <ArticleDetail />
+    </template>
 
     <AddFeedModal v-if="showAddFeed" @close="showAddFeed = false" @added="onFeedAdded" />
     <EditFeedModal

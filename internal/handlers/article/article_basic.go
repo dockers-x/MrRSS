@@ -122,3 +122,38 @@ func HandleToggleReadLater(h *core.Handler, w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
+
+// HandleImageGalleryArticles returns articles from image mode feeds with pagination.
+func HandleImageGalleryArticles(h *core.Handler, w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+	feedIDStr := r.URL.Query().Get("feed_id")
+
+	var feedID int64
+	if feedIDStr != "" {
+		feedID, _ = strconv.ParseInt(feedIDStr, 10, 64)
+	}
+
+	page := 1
+	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+		page = p
+	}
+
+	limit := 50
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+		limit = l
+	}
+
+	offset := (page - 1) * limit
+
+	// Get show_hidden_articles setting
+	showHiddenStr, _ := h.DB.GetSetting("show_hidden_articles")
+	showHidden := showHiddenStr == "true"
+
+	articles, err := h.DB.GetImageGalleryArticles(feedID, showHidden, limit, offset)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(articles)
+}

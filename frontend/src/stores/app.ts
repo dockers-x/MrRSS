@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, type Ref } from 'vue';
 import type { Article, Feed, UnreadCounts, RefreshProgress } from '@/types/models';
 
-export type Filter = 'all' | 'unread' | 'favorites' | 'readLater' | '';
+export type Filter = 'all' | 'unread' | 'favorites' | 'readLater' | 'imageGallery' | '';
 export type ThemePreference = 'light' | 'dark' | 'auto';
 export type Theme = 'light' | 'dark';
 
@@ -79,13 +79,25 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function setFeed(feedId: number): void {
-    currentFilter.value = '';
-    currentFeedId.value = feedId;
-    currentCategory.value = null;
-    page.value = 1;
-    articles.value = [];
-    hasMore.value = true;
-    fetchArticles();
+    // Check if this feed is an image mode feed
+    const feed = feeds.value.find((f) => f.id === feedId);
+    if (feed?.is_image_mode) {
+      // Switch to image gallery mode for image mode feeds
+      currentFilter.value = 'imageGallery';
+      currentFeedId.value = feedId;
+      currentCategory.value = null;
+      page.value = 1;
+      articles.value = [];
+      hasMore.value = true;
+    } else {
+      currentFilter.value = '';
+      currentFeedId.value = feedId;
+      currentCategory.value = null;
+      page.value = 1;
+      articles.value = [];
+      hasMore.value = true;
+      fetchArticles();
+    }
   }
 
   function setCategory(category: string): void {

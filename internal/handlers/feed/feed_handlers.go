@@ -30,6 +30,7 @@ func HandleAddFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		ProxyURL         string `json:"proxy_url"`
 		ProxyEnabled     bool   `json:"proxy_enabled"`
 		RefreshInterval  int    `json:"refresh_interval"`
+		IsImageMode      bool   `json:"is_image_mode"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,7 +60,7 @@ func HandleAddFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "feed created but failed to update settings: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := h.DB.UpdateFeed(feed.ID, feed.Title, feed.URL, feed.Category, feed.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval); err != nil {
+	if err := h.DB.UpdateFeed(feed.ID, feed.Title, feed.URL, feed.Category, feed.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval, req.IsImageMode); err != nil {
 		http.Error(w, "feed created but failed to update settings: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -99,13 +100,14 @@ func HandleUpdateFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		ProxyURL         string `json:"proxy_url"`
 		ProxyEnabled     bool   `json:"proxy_enabled"`
 		RefreshInterval  int    `json:"refresh_interval"`
+		IsImageMode      bool   `json:"is_image_mode"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.DB.UpdateFeed(req.ID, req.Title, req.URL, req.Category, req.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval); err != nil {
+	if err := h.DB.UpdateFeed(req.ID, req.Title, req.URL, req.Category, req.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval, req.IsImageMode); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

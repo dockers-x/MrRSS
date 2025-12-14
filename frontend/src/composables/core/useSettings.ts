@@ -58,6 +58,7 @@ export function useSettings() {
     network_latency_ms: settingsDefaults.network_latency_ms,
     max_concurrent_refreshes: settingsDefaults.max_concurrent_refreshes,
     last_network_test: settingsDefaults.last_network_test,
+    image_gallery_enabled: settingsDefaults.image_gallery_enabled,
   } as SettingsData);
 
   /**
@@ -124,6 +125,7 @@ export function useSettings() {
         max_concurrent_refreshes:
           data.max_concurrent_refreshes || settingsDefaults.max_concurrent_refreshes,
         last_network_test: data.last_network_test || settingsDefaults.last_network_test,
+        image_gallery_enabled: data.image_gallery_enabled === 'true',
       } as SettingsData;
 
       return settings.value;

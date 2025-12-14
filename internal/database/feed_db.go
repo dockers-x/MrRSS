@@ -18,8 +18,8 @@ func (db *DB) AddFeed(feed *models.Feed) (int64, error) {
 
 	if err == sql.ErrNoRows {
 		// Feed doesn't exist, insert new
-		query := `INSERT INTO feeds (title, url, link, description, category, image_url, script_path, hide_from_timeline, proxy_url, proxy_enabled, refresh_interval, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		result, err := db.Exec(query, feed.Title, feed.URL, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, time.Now())
+		query := `INSERT INTO feeds (title, url, link, description, category, image_url, script_path, hide_from_timeline, proxy_url, proxy_enabled, refresh_interval, is_image_mode, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		result, err := db.Exec(query, feed.Title, feed.URL, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, time.Now())
 		if err != nil {
 			return 0, err
 		}
@@ -33,8 +33,8 @@ func (db *DB) AddFeed(feed *models.Feed) (int64, error) {
 	}
 
 	// Feed exists, update it
-	query := `UPDATE feeds SET title = ?, link = ?, description = ?, category = ?, image_url = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, last_updated = ? WHERE id = ?`
-	_, err = db.Exec(query, feed.Title, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, time.Now(), existingID)
+	query := `UPDATE feeds SET title = ?, link = ?, description = ?, category = ?, image_url = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, is_image_mode = ?, last_updated = ? WHERE id = ?`
+	_, err = db.Exec(query, feed.Title, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, time.Now(), existingID)
 	return existingID, err
 }
 
@@ -53,7 +53,7 @@ func (db *DB) DeleteFeed(id int64) error {
 // GetFeeds returns all feeds.
 func (db *DB) GetFeeds() ([]models.Feed, error) {
 	db.WaitForReady()
-	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0) FROM feeds")
+	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0) FROM feeds")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 	for rows.Next() {
 		var f models.Feed
 		var link, category, imageURL, lastError, scriptPath, proxyURL sql.NullString
-		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval); err != nil {
+		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode); err != nil {
 			return nil, err
 		}
 		f.Link = link.String
@@ -80,11 +80,11 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 // GetFeedByID retrieves a specific feed by its ID.
 func (db *DB) GetFeedByID(id int64) (*models.Feed, error) {
 	db.WaitForReady()
-	row := db.QueryRow("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0) FROM feeds WHERE id = ?", id)
+	row := db.QueryRow("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0) FROM feeds WHERE id = ?", id)
 
 	var f models.Feed
 	var link, category, imageURL, lastError, scriptPath, proxyURL sql.NullString
-	if err := row.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval); err != nil {
+	if err := row.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode); err != nil {
 		return nil, err
 	}
 	f.Link = link.String
@@ -117,10 +117,10 @@ func (db *DB) GetAllFeedURLs() (map[string]bool, error) {
 	return urls, rows.Err()
 }
 
-// UpdateFeed updates feed title, URL, category, script_path, hide_from_timeline, proxy settings, and refresh_interval.
-func (db *DB) UpdateFeed(id int64, title, url, category, scriptPath string, hideFromTimeline bool, proxyURL string, proxyEnabled bool, refreshInterval int) error {
+// UpdateFeed updates feed title, URL, category, script_path, hide_from_timeline, proxy settings, refresh_interval, and is_image_mode.
+func (db *DB) UpdateFeed(id int64, title, url, category, scriptPath string, hideFromTimeline bool, proxyURL string, proxyEnabled bool, refreshInterval int, isImageMode bool) error {
 	db.WaitForReady()
-	_, err := db.Exec("UPDATE feeds SET title = ?, url = ?, category = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ? WHERE id = ?", title, url, category, scriptPath, hideFromTimeline, proxyURL, proxyEnabled, refreshInterval, id)
+	_, err := db.Exec("UPDATE feeds SET title = ?, url = ?, category = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, is_image_mode = ? WHERE id = ?", title, url, category, scriptPath, hideFromTimeline, proxyURL, proxyEnabled, refreshInterval, isImageMode, id)
 	return err
 }
 

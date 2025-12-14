@@ -120,6 +120,31 @@ const emit = defineEmits<{
         "
       />
     </div>
+    <div class="setting-item mt-2 sm:mt-3">
+      <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+        <PhImage :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+        <div class="flex-1 min-w-0">
+          <div class="font-medium mb-0 sm:mb-1 text-sm sm:text-base">
+            {{ t('imageGalleryEnabled') }}
+          </div>
+          <div class="text-xs text-text-secondary hidden sm:block">
+            {{ t('imageGalleryEnabledDesc') }}
+          </div>
+        </div>
+      </div>
+      <input
+        :checked="settings.image_gallery_enabled"
+        type="checkbox"
+        class="toggle"
+        @change="
+          (e) =>
+            emit('update:settings', {
+              ...settings,
+              image_gallery_enabled: (e.target as HTMLInputElement).checked,
+            })
+        "
+      />
+    </div>
   </div>
 </template>
 

@@ -60,6 +60,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		networkLatency, _ := h.DB.GetSetting("network_latency_ms")
 		maxConcurrentRefreshes, _ := h.DB.GetSetting("max_concurrent_refreshes")
 		lastNetworkTest, _ := h.DB.GetSetting("last_network_test")
+		imageGalleryEnabled, _ := h.DB.GetSetting("image_gallery_enabled")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":             interval,
 			"refresh_mode":                refreshMode,
@@ -108,6 +109,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"network_latency_ms":          networkLatency,
 			"max_concurrent_refreshes":    maxConcurrentRefreshes,
 			"last_network_test":           lastNetworkTest,
+			"image_gallery_enabled":       imageGalleryEnabled,
 		})
 	case http.MethodPost:
 		var req struct {
@@ -157,6 +159,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			NetworkLatency           string `json:"network_latency_ms"`
 			MaxConcurrentRefreshes   string `json:"max_concurrent_refreshes"`
 			LastNetworkTest          string `json:"last_network_test"`
+			ImageGalleryEnabled      string `json:"image_gallery_enabled"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -314,6 +317,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 
 		if req.LastNetworkTest != "" {
 			h.DB.SetSetting("last_network_test", req.LastNetworkTest)
+		}
+
+		if req.ImageGalleryEnabled != "" {
+			h.DB.SetSetting("image_gallery_enabled", req.ImageGalleryEnabled)
 		}
 
 		if req.StartupOnBoot != "" {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useAppStore } from '@/stores/app';
 import { useI18n } from 'vue-i18n';
 import { PhPlus, PhGear, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
@@ -8,6 +9,31 @@ import SidebarCategory from './SidebarCategory.vue';
 
 const store = useAppStore();
 const { t } = useI18n();
+
+// Check if image gallery feature is enabled
+const imageGalleryEnabled = ref(false);
+
+async function loadImageGallerySetting() {
+  try {
+    const res = await fetch('/api/settings');
+    if (res.ok) {
+      const data = await res.json();
+      imageGalleryEnabled.value = data.image_gallery_enabled === 'true';
+    }
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+  }
+}
+
+onMounted(async () => {
+  await loadImageGallerySetting();
+  
+  // Listen for settings changes
+  window.addEventListener('image-gallery-setting-changed', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    imageGalleryEnabled.value = customEvent.detail.enabled;
+  });
+});
 
 interface Props {
   isOpen?: boolean;
@@ -72,6 +98,13 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         :is-active="store.currentFilter === 'readLater'"
         icon="readLater"
         @click="store.setFilter('readLater')"
+      />
+      <SidebarNavItem
+        v-if="imageGalleryEnabled"
+        :label="t('imageGallery')"
+        :is-active="store.currentFilter === 'imageGallery'"
+        icon="imageGallery"
+        @click="store.setFilter('imageGallery')"
       />
     </nav>
 

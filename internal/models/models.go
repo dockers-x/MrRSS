@@ -18,6 +18,7 @@ type Feed struct {
 	ProxyURL           string    `json:"proxy_url,omitempty"`   // Custom proxy URL for this feed (overrides global)
 	ProxyEnabled       bool      `json:"proxy_enabled"`         // Whether to use proxy for this feed
 	RefreshInterval    int       `json:"refresh_interval"`      // Custom refresh interval in minutes (0 = use global, -1 = intelligent, >0 = custom minutes)
+	IsImageMode        bool      `json:"is_image_mode"`         // Whether this feed is for image gallery mode
 }
 
 type Article struct {

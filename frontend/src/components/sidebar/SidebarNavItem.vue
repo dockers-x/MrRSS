@@ -5,13 +5,14 @@ import {
   PhCircle,
   PhStar,
   PhClockCountdown,
+  PhImages,
 } from '@phosphor-icons/vue';
 import { Component, computed } from 'vue';
 
 interface Props {
   label: string;
   isActive: boolean;
-  icon: 'all' | 'unread' | 'favorites' | 'readLater';
+  icon: 'all' | 'unread' | 'favorites' | 'readLater' | 'imageGallery';
   unreadCount?: number;
 }
 
@@ -26,6 +27,7 @@ const iconMap: Record<string, Component> = {
   unread: PhCircle,
   favorites: PhStar,
   readLater: PhClockCountdown,
+  imageGallery: PhImages,
 };
 
 // Use different icon for "all" when active
