@@ -73,21 +73,21 @@ async function fetchImages(loadMore = false) {
   }
 }
 
-// Calculate number of columns based on container width
+// Calculate number of columns based on container width dynamically
 function calculateColumns() {
   if (!containerRef.value) return;
   const width = containerRef.value.offsetWidth;
-  if (width < 640) {
-    columnCount.value = 2;
-  } else if (width < 768) {
-    columnCount.value = 3;
-  } else if (width < 1024) {
-    columnCount.value = 4;
-  } else if (width < 1280) {
-    columnCount.value = 5;
-  } else {
-    columnCount.value = 6;
-  }
+  
+  // Target column width: 250px for optimal image viewing
+  // Minimum 2 columns, no maximum
+  const targetColumnWidth = 250;
+  const calculatedColumns = Math.floor(width / targetColumnWidth);
+  
+  // Ensure at least 2 columns
+  columnCount.value = Math.max(2, calculatedColumns);
+  
+  // Rearrange columns after calculating new count
+  arrangeColumns();
 }
 
 // Arrange articles into columns by time, balancing heights
@@ -260,8 +260,7 @@ onMounted(() => {
   window.addEventListener('click', closeContextMenu);
   
   nextTick(() => {
-    calculateColumns();
-    arrangeColumns();
+    calculateColumns(); // This now also calls arrangeColumns()
   });
 });
 
