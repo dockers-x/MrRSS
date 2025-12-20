@@ -2,6 +2,7 @@ package opml
 
 import (
 	"MrRSS/internal/models"
+	"MrRSS/internal/utils"
 	"bytes"
 	"encoding/xml"
 	"errors"
@@ -67,7 +68,7 @@ func Parse(r io.Reader) ([]models.Feed, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("OPML Parse: Read %d bytes", len(content))
+	utils.DebugLog("OPML Parse: Read %d bytes", len(content))
 
 	if len(content) == 0 {
 		return nil, errors.New("file content is empty")
@@ -100,7 +101,7 @@ func Parse(r io.Reader) ([]models.Feed, error) {
 		// Try fallback parsing for malformed OPML
 		feeds := fallbackParse(content)
 		if len(feeds) > 0 {
-			log.Printf("OPML Parse: Fallback parsing found %d feeds", len(feeds))
+			utils.DebugLog("OPML Parse: Fallback parsing found %d feeds", len(feeds))
 			return feeds, nil
 		}
 		return nil, err
@@ -153,7 +154,7 @@ func Parse(r io.Reader) ([]models.Feed, error) {
 	}
 	extract(doc.Body.Outlines, "")
 
-	log.Printf("OPML Parse: Found %d feeds", len(feeds))
+	utils.DebugLog("OPML Parse: Found %d feeds", len(feeds))
 	return feeds, nil
 }
 

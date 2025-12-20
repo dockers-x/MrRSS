@@ -40,6 +40,14 @@ import (
 	"MrRSS/internal/utils"
 )
 
+var debugLogging = os.Getenv("MRRSS_DEBUG") != ""
+
+func debugLog(format string, args ...interface{}) {
+	if debugLogging {
+		log.Printf(format, args...)
+	}
+}
+
 //go:embed frontend/dist
 var frontendFiles embed.FS
 
@@ -126,7 +134,7 @@ func main() {
 		log.Printf("Error getting database path: %v", err)
 		log.Fatal(err)
 	}
-	log.Printf("Database path: %s", dbPath)
+	debugLog("Database path: %s", dbPath)
 
 	// Initialize database
 	log.Println("Initializing Database...")

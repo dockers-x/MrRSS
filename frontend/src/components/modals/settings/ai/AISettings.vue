@@ -79,11 +79,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Tip moved to top with improved styling -->
   <div class="tip-box">
     <PhInfo :size="16" class="text-accent shrink-0 sm:w-5 sm:h-5" />
     <span class="text-xs sm:text-sm">{{ t('aiIsDanger') }}</span>
   </div>
+
   <div class="setting-group">
     <label
       class="font-semibold mb-2 sm:mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2"
@@ -221,7 +221,7 @@ onMounted(() => {
           >
             <div class="flex items-center justify-between text-xs text-text-secondary">
               <span>{{ t('progress') }}</span>
-              <span>{{ getUsagePercentage() }}%</span>
+              <span class="text-accent">{{ getUsagePercentage().toFixed(2) }}%</span>
             </div>
             <div class="relative h-2 bg-bg-tertiary rounded-full overflow-hidden">
               <div

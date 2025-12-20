@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhGlobe, PhArticle, PhPackage, PhKey, PhLink, PhRobot } from '@phosphor-icons/vue';
+import { PhGlobe, PhArticle, PhPackage, PhKey, PhLink, PhRobot, PhInfo } from '@phosphor-icons/vue';
 import type { SettingsData } from '@/types/settings';
 
 const { t } = useI18n();
@@ -245,6 +245,10 @@ const emit = defineEmits<{
       </template>
 
       <!-- AI Translation Prompt -->
+      <div v-if="props.settings.translation_provider === 'ai'" class="tip-box">
+        <PhInfo :size="16" class="text-accent shrink-0 sm:w-5 sm:h-5" />
+        <span class="text-xs sm:text-sm">{{ t('aiSettingsConfiguredInAITab') }}</span>
+      </div>
       <div
         v-if="props.settings.translation_provider === 'ai'"
         class="sub-setting-item flex-col items-stretch gap-2"
@@ -271,7 +275,6 @@ const emit = defineEmits<{
               })
           "
         />
-        <div class="text-xs text-text-secondary">{{ t('aiSettingsConfiguredInAITab') }}</div>
       </div>
 
       <div class="sub-setting-item">
@@ -328,5 +331,10 @@ const emit = defineEmits<{
 }
 .sub-setting-item {
   @apply flex items-center sm:items-start justify-between gap-2 sm:gap-4 p-2 sm:p-2.5 rounded-md bg-bg-tertiary;
+}
+.tip-box {
+  @apply flex items-center gap-2 sm:gap-3 py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-lg w-full;
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 </style>

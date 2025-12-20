@@ -39,11 +39,13 @@ func HandleTranslateArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 
 	var translatedTitle string
 	var err error
+	var limitReached = false
 
 	if isAIProvider {
 		// Check if AI usage limit is reached
 		if h.AITracker.IsLimitReached() {
 			log.Printf("AI usage limit reached, falling back to Google Translate")
+			limitReached = true
 			// Fallback to Google Translate
 			googleTranslator := translation.NewGoogleFreeTranslatorWithDB(h.DB)
 			translatedTitle, err = googleTranslator.Translate(req.Title, req.TargetLang)
@@ -51,10 +53,17 @@ func HandleTranslateArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 			// Apply rate limiting for AI requests
 			h.AITracker.WaitForRateLimit()
 
-			// Translate with AI
+			// Try AI translation first
 			translatedTitle, err = h.Translator.Translate(req.Title, req.TargetLang)
 
-			// Track AI usage
+			// If AI fails, fallback to Google Translate
+			if err != nil {
+				log.Printf("AI translation failed, falling back to Google Translate: %v", err)
+				googleTranslator := translation.NewGoogleFreeTranslatorWithDB(h.DB)
+				translatedTitle, err = googleTranslator.Translate(req.Title, req.TargetLang)
+			}
+
+			// Track AI usage only on success (whether AI or fallback)
 			if err == nil {
 				h.AITracker.TrackTranslation(req.Title, translatedTitle)
 			}
@@ -77,8 +86,9 @@ func HandleTranslateArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"translated_title": translatedTitle,
+		"limit_reached":    limitReached,
 	})
 }
 
@@ -140,10 +150,17 @@ func HandleTranslateText(h *core.Handler, w http.ResponseWriter, r *http.Request
 			// Apply rate limiting for AI requests
 			h.AITracker.WaitForRateLimit()
 
-			// Translate with AI
+			// Try AI translation first
 			translatedText, err = h.Translator.Translate(req.Text, req.TargetLang)
 
-			// Track AI usage
+			// If AI fails, fallback to Google Translate
+			if err != nil {
+				log.Printf("AI translation failed, falling back to Google Translate: %v", err)
+				googleTranslator := translation.NewGoogleFreeTranslatorWithDB(h.DB)
+				translatedText, err = googleTranslator.Translate(req.Text, req.TargetLang)
+			}
+
+			// Track AI usage only on success (whether AI or fallback)
 			if err == nil {
 				h.AITracker.TrackTranslation(req.Text, translatedText)
 			}

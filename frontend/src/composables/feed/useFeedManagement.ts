@@ -67,8 +67,29 @@ export function useFeedManagement() {
   /**
    * Export OPML file
    */
-  function handleExportOPML() {
-    window.location.href = '/api/opml/export';
+  async function handleExportOPML() {
+    try {
+      const response = await fetch('/api/opml/export');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'subscriptions.opml';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      window.showToast(t('opmlExportedSuccess'), 'success');
+    } catch (error) {
+      console.error('Failed to export OPML:', error);
+      window.showToast(t('exportFailed', { error: error.message }), 'error');
+    }
   }
 
   /**

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"MrRSS/internal/config"
+	"MrRSS/internal/utils"
 )
 
 // AISummarizer implements summarization using OpenAI-compatible APIs (GPT, Claude, etc.).
@@ -19,12 +20,40 @@ type AISummarizer struct {
 	Model        string
 	SystemPrompt string
 	client       *http.Client
+	db           DBInterface
+}
+
+// DBInterface defines the minimal database interface needed for proxy settings
+type DBInterface interface {
+	GetSetting(key string) (string, error)
+	GetEncryptedSetting(key string) (string, error)
+}
+
+// CreateHTTPClientWithProxy creates an HTTP client with global proxy settings if enabled
+func CreateHTTPClientWithProxy(db DBInterface, timeout time.Duration) (*http.Client, error) {
+	var proxyURL string
+
+	// Check if global proxy is enabled
+	proxyEnabled, _ := db.GetSetting("proxy_enabled")
+	if proxyEnabled == "true" {
+		// Build proxy URL from global settings
+		proxyType, _ := db.GetSetting("proxy_type")
+		proxyHost, _ := db.GetSetting("proxy_host")
+		proxyPort, _ := db.GetSetting("proxy_port")
+		proxyUsername, _ := db.GetEncryptedSetting("proxy_username")
+		proxyPassword, _ := db.GetEncryptedSetting("proxy_password")
+		proxyURL = utils.BuildProxyURL(proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword)
+	}
+
+	// Create HTTP client with or without proxy
+	return utils.CreateHTTPClient(proxyURL, timeout)
 }
 
 // NewAISummarizer creates a new AI summarizer with the given credentials.
 // endpoint should be the full API URL (e.g., "https://api.openai.com/v1/chat/completions" for OpenAI, "http://localhost:11434/api/generate" for Ollama)
 // model should be the model name (e.g., "gpt-4o-mini", "claude-3-haiku-20240307")
 // Uses global AI settings shared between translation and summarization.
+// db is optional - if nil, no proxy will be used
 func NewAISummarizer(apiKey, endpoint, model string) *AISummarizer {
 	defaults := config.Get()
 	// Use global AI endpoint and model
@@ -40,6 +69,31 @@ func NewAISummarizer(apiKey, endpoint, model string) *AISummarizer {
 		Model:        model,
 		SystemPrompt: "", // Will be set from settings when used
 		client:       &http.Client{Timeout: 30 * time.Second},
+		db:           nil,
+	}
+}
+
+// NewAISummarizerWithDB creates a new AI summarizer with database for proxy support
+func NewAISummarizerWithDB(apiKey, endpoint, model string, db DBInterface) *AISummarizer {
+	defaults := config.Get()
+	if endpoint == "" {
+		endpoint = defaults.AIEndpoint
+	}
+	if model == "" {
+		model = defaults.AIModel
+	}
+	client, err := CreateHTTPClientWithProxy(db, 30*time.Second)
+	if err != nil {
+		// Fallback to default client if proxy creation fails
+		client = &http.Client{Timeout: 30 * time.Second}
+	}
+	return &AISummarizer{
+		APIKey:       apiKey,
+		Endpoint:     strings.TrimSuffix(endpoint, "/"),
+		Model:        model,
+		SystemPrompt: "",
+		client:       client,
+		db:           db,
 	}
 }
 

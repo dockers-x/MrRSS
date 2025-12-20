@@ -203,7 +203,8 @@ const zh: TranslationMessages = {
   baiduSecretKey: '百度密钥',
   baiduSecretKeyDesc: '输入您的百度翻译密钥',
   baiduSecretKeyPlaceholder: '输入您的密钥',
-  // AI 设置标签页
+
+  // AI Settings
   aiIsDanger:
     '使用 AI 服务可能会产生费用，部分功能可能消耗 Token 较多，请确保您了解相关费用结构并实时监控使用情况。',
   aiSettings: 'AI 设置',
@@ -211,7 +212,7 @@ const zh: TranslationMessages = {
     '配置翻译和摘要功能使用的全局 AI 设置。这些设置在选择 AI 提供商时同时应用于翻译和摘要。',
   aiTranslation: 'AI 翻译',
   aiApiKey: 'AI API 密钥',
-  aiApiKeyDesc: '输入您的 AI 服务 API 密钥',
+  aiApiKeyDesc: '输入您的 AI 服务 API 密钥（本地模型可以留空）',
   aiApiKeyPlaceholder: '输入您的 API 密钥',
   aiEndpoint: 'API 端点',
   aiEndpointDesc: '完整的 API 端点 URL，包括路径。本地端点也受支持。',
@@ -231,7 +232,8 @@ const zh: TranslationMessages = {
   aiSummaryPromptDesc: 'AI 摘要的自定义系统提示词',
   aiSummaryPromptPlaceholder:
     '你是一个摘要生成器。生成给定文本的简洁摘要。只输出摘要，不要输出其他内容。',
-  aiSettingsConfiguredInAITab: 'AI API 密钥、端点和模型在 AI 标签页中配置。',
+  aiSettingsConfiguredInAITab:
+    'AI API 密钥、端点和模型在 AI 标签页中配置。该功能消耗 Token 较多，请谨慎使用。',
   aiUsage: 'AI 使用量',
   aiUsageTokens: '已使用 Token',
   aiUsageTokensDesc: '消耗的 Token 总量',
@@ -249,7 +251,7 @@ const zh: TranslationMessages = {
   aiSettingsIncomplete: 'AI 设置不完整',
   tokens: 'Token',
   unlimited: '无限制',
-  progress: '进度',
+  progress: '进度：',
   targetLanguage: '目标语言',
   targetLanguageDesc: '将文章标题翻译为此语言',
   language: '语言',
@@ -294,12 +296,12 @@ const zh: TranslationMessages = {
   originalContent: '原文',
 
   // Languages
-  english: '英语',
-  spanish: '西班牙语',
-  french: '法语',
-  german: '德语',
+  english: 'english',
+  spanish: 'español',
+  french: 'français',
+  german: 'deutsch',
   chinese: '中文',
-  japanese: '日语',
+  japanese: '日本語',
 
   // Proxy Settings
   proxySettings: '代理设置',
@@ -430,11 +432,13 @@ const zh: TranslationMessages = {
   clearedReadLater: '稍后阅读列表已清空',
   databaseCleanedSuccess: '数据库清理成功。已删除 {count} 篇文章。',
   opmlImportedSuccess: 'OPML 已导入。订阅源即将显示。',
+  opmlExportedSuccess: 'OPML 导出成功。',
   errorSavingSettings: '保存设置时出错',
   errorAddingFeed: '添加订阅时出错',
   errorUpdatingFeed: '更新订阅时出错',
   errorCleaningDatabase: '清理数据库时出错',
   importFailed: '导入失败：{error}',
+  exportFailed: '导出失败：{error}',
   errorTranslating: '翻译失败。请检查网络连接和翻译设置。',
   errorTranslatingTitle: '翻译文章标题失败',
   errorTranslatingContent: '翻译内容失败',

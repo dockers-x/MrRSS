@@ -289,11 +289,13 @@ export interface TranslationMessages {
   markedAllAsRead: string;
   databaseCleanedSuccess: string;
   opmlImportedSuccess: string;
+  opmlExportedSuccess: string;
   errorSavingSettings: string;
   errorAddingFeed: string;
   errorUpdatingFeed: string;
   errorCleaningDatabase: string;
   importFailed: string;
+  exportFailed: string;
 
   // Loading Messages
   loadingContent: string;
