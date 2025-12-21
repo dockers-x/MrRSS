@@ -326,19 +326,22 @@ watch(
 // Watch for content loading completion only
 watch(
   () => props.isLoadingContent,
-  (isLoading, wasLoading) => {
+  async (isLoading, wasLoading) => {
     if (wasLoading && !isLoading && props.article) {
       // Enhance rendering first (math formulas, etc.)
-      nextTick(() => {
-        enhanceRendering('.prose-content');
-      });
+      await nextTick();
+      enhanceRendering('.prose-content');
+
+      // Re-attach image event listeners after rendering enhancements
+      await reattachImageInteractions();
 
       // Delay summary generation to prioritize content display
       if (summaryEnabled.value) {
         setTimeout(() => generateSummary(props.article), 100);
       }
       if (translationEnabled.value && lastTranslatedArticleId.value !== props.article.id) {
-        nextTick(() => translateContentParagraphs(props.articleContent));
+        await nextTick();
+        translateContentParagraphs(props.articleContent);
       }
     }
   }
@@ -351,6 +354,8 @@ onMounted(async () => {
     if (props.articleContent && !props.isLoadingContent) {
       await nextTick();
       enhanceRendering('.prose-content');
+      // Re-attach image event listeners after rendering
+      await reattachImageInteractions();
     }
 
     if (summaryEnabled.value && props.articleContent) {
@@ -360,7 +365,8 @@ onMounted(async () => {
     if (translationEnabled.value) {
       translateTitle(props.article);
       if (props.articleContent && !props.isLoadingContent) {
-        nextTick(() => translateContentParagraphs(props.articleContent));
+        await nextTick();
+        translateContentParagraphs(props.articleContent);
       }
     }
   }
@@ -369,9 +375,11 @@ onMounted(async () => {
 // Ensure image interactions stay attached when content is (re)rendered
 watch(
   () => props.articleContent,
-  (content) => {
+  async (content) => {
     if (content) {
-      reattachImageInteractions();
+      // Wait for v-html to update the DOM before attaching event listeners
+      await nextTick();
+      await reattachImageInteractions();
     }
   },
   { immediate: true }

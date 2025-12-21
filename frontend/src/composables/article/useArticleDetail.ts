@@ -156,9 +156,8 @@ export function useArticleDetail() {
         }
 
         articleContent.value = content;
-        // Wait for DOM to update, then attach event listeners
-        await nextTick();
-        attachContentEventListeners();
+        // Don't attach event listeners here - let ArticleContent.vue handle it
+        // after enhanceRendering is complete
       } else {
         console.error('Failed to fetch article content');
         articleContent.value = '';
@@ -216,14 +215,22 @@ export function useArticleDetail() {
     // First, unwrap any images that are inside hyperlinks
     unwrapImagesFromLinks();
 
-    // Get all images in prose content
-    const images = document.querySelectorAll<HTMLImageElement>('.prose img');
+    // Get all images in prose content (use more specific selector)
+    const proseContainers = document.querySelectorAll('.prose-content, .prose');
+    if (proseContainers.length === 0) {
+      return;
+    }
+
+    const images = document.querySelectorAll<HTMLImageElement>('.prose img, .prose-content img');
+
+    if (images.length === 0) {
+      return;
+    }
 
     images.forEach((img) => {
       try {
         // Verify the image has a valid parent
         if (!img.parentNode) {
-          console.warn('Image has no parent node, skipping event attachment');
           return;
         }
 
@@ -254,7 +261,6 @@ export function useArticleDetail() {
 
             // Verify image src exists
             if (!newImg.src) {
-              console.warn('Image has no src, cannot open viewer');
               return;
             }
 
@@ -273,7 +279,6 @@ export function useArticleDetail() {
 
             // Verify image src exists
             if (!newImg.src) {
-              console.warn('Image has no src, cannot show context menu');
               return;
             }
 
