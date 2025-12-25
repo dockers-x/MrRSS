@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed the issue where some articles failed to open when filter is applied. (#304)
+- Fixed the issue where folders are not synchronized correctly and articles are duplicated when syncing with FreshRSS. (#305)
 
 ## [1.3.8] - 2025-12-24
 
