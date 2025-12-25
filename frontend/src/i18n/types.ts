@@ -138,6 +138,7 @@ export interface TranslationMessages {
   detecting: string;
   discoverAllFeeds: string;
   discoverAllFeedsDesc: string;
+  discoveryLongRunningWarning: string;
   discoverFeeds: string;
   discovering: string;
   discoveringAllFeeds: string;
@@ -187,6 +188,7 @@ export interface TranslationMessages {
   feedRefreshStarted: string;
   feedReordered: string;
   feeds: string;
+  feedDiscovery: string;
   feedsDeletedSuccess: string;
   feedsMovedSuccess: string;
   feedSource: string;
@@ -295,6 +297,7 @@ export interface TranslationMessages {
   mediaCacheMaxAgeDesc: string;
   mediaCacheMaxSize: string;
   mediaCacheMaxSizeDesc: string;
+  minutes: string;
   minutesAgo: string;
   move: string;
   moveFeeds: string;
