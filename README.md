@@ -14,6 +14,9 @@
   </p>
 </div>
 
+> [!TIP]
+> If you encounter any issues while using the application, please first check the [Q&A page](https://github.com/WCY-dt/MrRSS/discussions/217). If you cannot find a solution, feel free to report the issue in [Issues](https://github.com/WCY-dt/MrRSS/issues).
+
 ---
 
 ## ✨ Features

@@ -14,6 +14,9 @@
   </p>
 </div>
 
+> [!TIP]
+> 如果您在使用中遇到了问题，可以先查阅 [Q&A 页面](https://github.com/WCY-dt/MrRSS/discussions/210)。如果没有找到解决方案，请随时在 [Issues](https://github.com/WCY-dt/MrRSS/issues) 中报告问题。
+
 ---
 
 ## ✨ 功能特性
