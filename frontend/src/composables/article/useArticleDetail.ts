@@ -200,7 +200,7 @@ export function useArticleDetail() {
   // Works on both main content and translated content
   function unwrapImagesFromLinks() {
     // Process all links in prose content (both main content and translations)
-    const links = document.querySelectorAll<HTMLAnchorElement>('.prose a');
+    const links = document.querySelectorAll<HTMLAnchorElement>('.prose-content a, .prose a');
     const linksToProcess: HTMLAnchorElement[] = [];
 
     // Collect links that contain images (check both direct children and nested)
@@ -237,127 +237,133 @@ export function useArticleDetail() {
   // Attach event listeners to images in rendered content
   // Can be called multiple times (e.g., after translations modify the DOM)
   function attachImageEventListeners() {
+    console.log('[attachImageEventListeners] Called');
+
     // First, unwrap any images that are inside hyperlinks
     unwrapImagesFromLinks();
 
     // Get all images in prose content (use more specific selector)
     const proseContainers = document.querySelectorAll('.prose-content, .prose');
+    console.log('[attachImageEventListeners] Found prose containers:', proseContainers.length);
+
     if (proseContainers.length === 0) {
       return;
     }
 
-    const images = document.querySelectorAll<HTMLImageElement>('.prose img, .prose-content img');
+    const images = document.querySelectorAll<HTMLImageElement>('.prose-content img, .prose img');
 
-    if (images.length === 0) {
-      return;
+    console.log('[attachImageEventListeners] Found images:', images.length);
+
+    // Process images if there are any
+    if (images.length > 0) {
+      images.forEach((img) => {
+        try {
+          // Verify the image has a valid parent
+          if (!img.parentNode) {
+            return;
+          }
+
+          // Skip images that are very small (likely icons/emojis)
+          const isSmallIcon = img.height <= 24 && img.height > 0;
+          if (isSmallIcon) {
+            return;
+          }
+
+          // Ensure the image and its parents can receive pointer events
+          img.style.cursor = 'pointer';
+          img.style.pointerEvents = 'auto';
+
+          // Remove old listeners by replacing with clone
+          const newImg = img.cloneNode(true) as HTMLImageElement;
+          img.parentNode.replaceChild(newImg, img);
+
+          // Ensure cloned image maintains pointer interaction styles
+          newImg.style.cursor = 'pointer';
+          newImg.style.pointerEvents = 'auto';
+
+          // Left click - open image viewer
+          newImg.addEventListener(
+            'click',
+            (e: Event) => {
+              e.preventDefault();
+              e.stopPropagation(); // Prevent event bubbling to parent elements
+
+              // Verify image src exists
+              if (!newImg.src) {
+                return;
+              }
+
+              imageViewerSrc.value = newImg.src;
+              imageViewerAlt.value = newImg.alt || '';
+            },
+            { capture: true }
+          ); // Use capture phase to ensure we get the event first
+
+          // Right click - show context menu for saving
+          newImg.addEventListener(
+            'contextmenu',
+            (e: MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation(); // Prevent event bubbling to parent elements
+
+              // Verify image src exists
+              if (!newImg.src) {
+                return;
+              }
+
+              // Use global context menu system
+              window.dispatchEvent(
+                new CustomEvent('open-context-menu', {
+                  detail: {
+                    x: e.clientX,
+                    y: e.clientY,
+                    items: [
+                      {
+                        label: t('viewImage'),
+                        action: 'view',
+                        icon: 'PhMagnifyingGlassPlus',
+                      },
+                      {
+                        label: t('downloadImage'),
+                        action: 'download',
+                        icon: 'PhDownloadSimple',
+                      },
+                    ],
+                    data: { src: newImg.src },
+                    callback: (action: string, data: { src: string }) => {
+                      if (action === 'view') {
+                        imageViewerSrc.value = data.src;
+                        imageViewerAlt.value = '';
+                      } else if (action === 'download') {
+                        downloadImage(data.src);
+                      }
+                    },
+                  },
+                })
+              );
+            },
+            { capture: true }
+          ); // Use capture phase to ensure we get the event first
+        } catch (error) {
+          console.error('Error attaching event listeners to image:', error);
+        }
+      });
     }
 
-    images.forEach((img) => {
-      try {
-        // Verify the image has a valid parent
-        if (!img.parentNode) {
-          return;
-        }
-
-        // Skip images that are very small (likely icons/emojis)
-        const isSmallIcon = img.height <= 24 && img.height > 0;
-        if (isSmallIcon) {
-          return;
-        }
-
-        // Ensure the image and its parents can receive pointer events
-        img.style.cursor = 'pointer';
-        img.style.pointerEvents = 'auto';
-
-        // Remove old listeners by replacing with clone
-        const newImg = img.cloneNode(true) as HTMLImageElement;
-        img.parentNode.replaceChild(newImg, img);
-
-        // Ensure cloned image maintains pointer interaction styles
-        newImg.style.cursor = 'pointer';
-        newImg.style.pointerEvents = 'auto';
-
-        // Left click - open image viewer
-        newImg.addEventListener(
-          'click',
-          (e: Event) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event bubbling to parent elements
-
-            // Verify image src exists
-            if (!newImg.src) {
-              return;
-            }
-
-            imageViewerSrc.value = newImg.src;
-            imageViewerAlt.value = newImg.alt || '';
-          },
-          { capture: true }
-        ); // Use capture phase to ensure we get the event first
-
-        // Right click - show context menu for saving
-        newImg.addEventListener(
-          'contextmenu',
-          (e: MouseEvent) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event bubbling to parent elements
-
-            // Verify image src exists
-            if (!newImg.src) {
-              return;
-            }
-
-            // Use global context menu system
-            window.dispatchEvent(
-              new CustomEvent('open-context-menu', {
-                detail: {
-                  x: e.clientX,
-                  y: e.clientY,
-                  items: [
-                    {
-                      label: t('viewImage'),
-                      action: 'view',
-                      icon: 'PhMagnifyingGlassPlus',
-                    },
-                    {
-                      label: t('downloadImage'),
-                      action: 'download',
-                      icon: 'PhDownloadSimple',
-                    },
-                  ],
-                  data: { src: newImg.src },
-                  callback: (action: string, data: { src: string }) => {
-                    if (action === 'view') {
-                      imageViewerSrc.value = data.src;
-                      imageViewerAlt.value = '';
-                    } else if (action === 'download') {
-                      downloadImage(data.src);
-                    }
-                  },
-                },
-              })
-            );
-          },
-          { capture: true }
-        ); // Use capture phase to ensure we get the event first
-      } catch (error) {
-        console.error('Error attaching event listeners to image:', error);
-      }
-    });
-
-    // Also attach link event listeners (for text-only links after unwrapping)
+    // Always attach link event listeners (even if there are no images)
     attachLinkEventListeners();
   }
 
   // Attach event listeners to links in rendered content
-  // Called after images have been unwrapped from links
+  // Uses the same clone-and-replace strategy as image handling
+  // This ensures fresh event listeners on each link
   function attachLinkEventListeners() {
-    // Handle all links - open in external browser
-    // At this point, all images have been unwrapped from links,
-    // so any remaining links are text-only and should open in browser
-    const links = document.querySelectorAll('.prose a');
+    // Get all text-only links (no images) in prose content
+    const links = document.querySelectorAll<HTMLAnchorElement>('.prose-content a, .prose a');
 
-    links.forEach((link) => {
+    console.log('[Link Handler] Found links:', links.length);
+
+    links.forEach((link, index) => {
       try {
         // Verify the link has a valid parent
         if (!link.parentNode) {
@@ -365,24 +371,35 @@ export function useArticleDetail() {
           return;
         }
 
-        // Skip if link still contains images (shouldn't happen, but defensive)
+        // Skip if the link contains an image (handled separately by image handlers)
         if (link.querySelector('img')) {
-          console.warn('Link still contains images, skipping link handler');
+          console.log('[Link Handler] Skipping image link:', link.href);
           return;
         }
 
-        // Remove any existing listeners by cloning
-        const newLink = link.cloneNode(true) as HTMLAnchorElement;
-        link.parentNode.replaceChild(newLink, link);
+        // Check if already processed (has our marker)
+        if (link.dataset.linkHandlerAttached === 'true') {
+          console.log('[Link Handler] Already processed:', link.href);
+          return;
+        }
 
-        // Add fresh event listener
-        newLink.addEventListener(
+        console.log('[Link Handler] Processing link:', index, link.href, link.textContent);
+
+        // Mark as processed
+        link.dataset.linkHandlerAttached = 'true';
+
+        // Add event listener using capture phase
+        link.addEventListener(
           'click',
           (e: Event) => {
-            // Open in external browser
+            console.log('[Link Handler] Clicked link:', link.href);
+            // Prevent default behavior and stop propagation
             e.preventDefault();
             e.stopPropagation();
-            const href = newLink.getAttribute('href');
+            e.stopImmediatePropagation();
+
+            // Get the href
+            const href = link.getAttribute('href');
             if (href) {
               try {
                 openInBrowser(href);
@@ -391,7 +408,7 @@ export function useArticleDetail() {
               }
             }
           },
-          { capture: true } // Use capture phase to ensure our handler runs first
+          { capture: true } // Use capture phase to intercept clicks early
         );
       } catch (error) {
         console.error('Error attaching event listeners to link:', error);
