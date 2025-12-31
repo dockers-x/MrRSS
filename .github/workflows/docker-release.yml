@@ -13,7 +13,27 @@ on:
         type: string
 
 jobs:
-  docker-release:
+  extract-metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Extract metadata
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+          fi
+          VERSION=${TAG#v}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building Docker images for tag: ${TAG}"
+
+  build-amd64:
+    needs: extract-metadata
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,64 +55,122 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG=${GITHUB_REF#refs/tags/}
-          fi
-          VERSION=${TAG#v}
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Building Docker images for tag: ${TAG}"
-
-      - name: Build and push Docker images
+      - name: Build and push AMD64 image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile.server
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}-amd64
-            ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}-arm64
-            ghcr.io/${{ github.repository_owner }}/mrrss:latest
+            ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}-amd64
             ghcr.io/${{ github.repository_owner }}/mrrss:latest-amd64
+          labels: |
+            org.opencontainers.image.title=MrRSS
+            org.opencontainers.image.description=A modern, privacy-focused RSS reader
+            org.opencontainers.image.version=${{ needs.extract-metadata.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+
+  build-arm64:
+    needs: extract-metadata
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ARM64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.server
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}-arm64
             ghcr.io/${{ github.repository_owner }}/mrrss:latest-arm64
           labels: |
             org.opencontainers.image.title=MrRSS
             org.opencontainers.image.description=A modern, privacy-focused RSS reader
-            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.version=${{ needs.extract-metadata.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
+
+  create-manifest:
+    needs: [extract-metadata, build-amd64, build-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          VERSION="${{ needs.extract-metadata.outputs.version }}"
+
+          # Create version-specific manifest
+          docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/mrrss:${VERSION} \
+            ghcr.io/${{ github.repository_owner }}/mrrss:${VERSION}-amd64 \
+            ghcr.io/${{ github.repository_owner }}/mrrss:${VERSION}-arm64
+
+          # Create latest manifest
+          docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/mrrss:latest \
+            ghcr.io/${{ github.repository_owner }}/mrrss:latest-amd64 \
+            ghcr.io/${{ github.repository_owner }}/mrrss:latest-arm64
 
       - name: Summary
         run: |
           echo "## Docker Release Completed! 🎉" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag:** ${{ steps.meta.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.extract-metadata.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Available Images" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Multi-architecture images:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Architecture-specific images:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}-amd64\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}-arm64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}-amd64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}-arm64\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:latest-amd64\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ github.repository_owner }}/mrrss:latest-arm64\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ github.repository_owner }}/mrrss:${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository_owner }}/mrrss:${{ needs.extract-metadata.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "# or" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ github.repository_owner }}/mrrss:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
