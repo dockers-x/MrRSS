@@ -12,6 +12,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   extract-metadata:
     runs-on: ubuntu-latest

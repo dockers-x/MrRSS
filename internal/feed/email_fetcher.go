@@ -88,7 +88,7 @@ func (ef *EmailFetcher) FetchEmails(ctx context.Context, feed *models.Feed) ([]*
 			maxUID = int(batchUIDs[len(batchUIDs)-1])
 		}
 
-		batchItems, err := ef.fetchEmailBatch(ctx, c, feed, batchUIDs)
+		batchItems, err := ef.fetchEmailBatch(c, batchUIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +135,7 @@ func (ef *EmailFetcher) connectToIMAP(feed *models.Feed) (*client.Client, error)
 }
 
 // fetchEmailBatch fetches and parses a batch of emails
-func (ef *EmailFetcher) fetchEmailBatch(ctx context.Context, c *client.Client, feed *models.Feed, uids []uint32) ([]*gofeed.Item, error) {
+func (ef *EmailFetcher) fetchEmailBatch(c *client.Client, uids []uint32) ([]*gofeed.Item, error) {
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uids...)
 
@@ -153,7 +153,7 @@ func (ef *EmailFetcher) fetchEmailBatch(ctx context.Context, c *client.Client, f
 			break
 		}
 
-		item, err := ef.parseEmailToItem(feed, msg)
+		item, err := ef.parseEmailToItem(msg)
 		if err != nil {
 			// Skip invalid emails but continue processing others
 			continue
@@ -168,7 +168,7 @@ func (ef *EmailFetcher) fetchEmailBatch(ctx context.Context, c *client.Client, f
 }
 
 // parseEmailToItem converts an IMAP message to a gofeed Item
-func (ef *EmailFetcher) parseEmailToItem(feed *models.Feed, msg *imap.Message) (*gofeed.Item, error) {
+func (ef *EmailFetcher) parseEmailToItem(msg *imap.Message) (*gofeed.Item, error) {
 	item := &gofeed.Item{
 		Title:     msg.Envelope.Subject,
 		Link:      fmt.Sprintf("email://%d", msg.Uid),

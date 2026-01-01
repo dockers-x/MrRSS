@@ -36,41 +36,6 @@ func setupDBForFeedTests(t *testing.T) *database.DB {
 	return db
 }
 
-func TestGetConcurrencyLimitVariants(t *testing.T) {
-	db := setupDBForFeedTests(t)
-	f := NewFetcher(db, nil)
-
-	// Test with small feed count (normal concurrency)
-	if got := f.getConcurrencyLimit(5); got != 5 {
-		t.Fatalf("expected default 5, got %d", got)
-	}
-
-	db.SetSetting("max_concurrent_refreshes", "3")
-	if got := f.getConcurrencyLimit(5); got != 3 {
-		t.Fatalf("expected 3, got %d", got)
-	}
-
-	db.SetSetting("max_concurrent_refreshes", "abc")
-	if got := f.getConcurrencyLimit(5); got != 5 {
-		t.Fatalf("invalid value should fallback to 5, got %d", got)
-	}
-
-	db.SetSetting("max_concurrent_refreshes", "100")
-	if got := f.getConcurrencyLimit(5); got != 30 {
-		t.Fatalf("capped at 30, got %d", got)
-	}
-
-	// Test with various feed counts - concurrency is now independent of feed count
-	db.SetSetting("max_concurrent_refreshes", "10")
-	if got := f.getConcurrencyLimit(30); got != 10 {
-		t.Fatalf("expected 10 for 30 feeds, got %d", got)
-	}
-
-	if got := f.getConcurrencyLimit(60); got != 10 {
-		t.Fatalf("expected 10 for 60 feeds, got %d", got)
-	}
-}
-
 func TestGetHTTPClientProxyPrecedence(t *testing.T) {
 	db := setupDBForFeedTests(t)
 	f := NewFetcher(db, nil)

@@ -107,7 +107,7 @@ func (f *Fetcher) getDataDir() (string, error) {
 
 // getConcurrencyLimit returns the maximum number of concurrent feed refreshes
 // based on network detection or defaults to 10 if not configured
-func (f *Fetcher) getConcurrencyLimit(feedCount int) int {
+func (f *Fetcher) getConcurrencyLimit() int {
 	concurrencyStr, err := f.db.GetSetting("max_concurrent_refreshes")
 	if err != nil || concurrencyStr == "" {
 		return 10 // Default concurrency increased from 5 to 10
@@ -237,7 +237,7 @@ func (f *Fetcher) FetchAll(ctx context.Context) {
 	log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds)", len(filteredFeeds), freshRSSCount)
 
 	// Update task manager capacity based on network
-	concurrency := f.getConcurrencyLimit(len(filteredFeeds))
+	concurrency := f.getConcurrencyLimit()
 	f.taskManager.SetPoolCapacity(concurrency)
 
 	// Use task manager for global refresh (all feeds go to queue tail)

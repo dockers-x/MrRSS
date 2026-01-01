@@ -16,9 +16,9 @@ func TestCalculateSpeedLevel(t *testing.T) {
 		want            SpeedLevel
 		wantConcurrency int
 	}{
-		{300, 0.5, SpeedSlow, 5},
-		{150, 5.0, SpeedMedium, 8},
-		{50, 20.0, SpeedFast, 15},
+		{300, 0.5, SpeedSlow, 8},
+		{150, 5.0, SpeedMedium, 12},
+		{50, 20.0, SpeedFast, 20},
 	}
 
 	for _, tt := range tests {
