@@ -26,6 +26,11 @@ const { t, locale } = useI18n();
 const { showPreviewImages } = useShowPreviewImages();
 const store = useAppStore();
 
+// Translation function wrapper for formatDate
+const formatDateWithI18n = (dateStr: string): string => {
+  return formatDateUtil(dateStr, locale.value, t);
+};
+
 const mediaCacheEnabled = ref(false);
 const hoverMarkAsRead = ref(false);
 let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -41,10 +46,6 @@ const imageUrl = computed(() => {
 const shouldShowImage = computed(() => {
   return showPreviewImages.value && props.article.image_url;
 });
-
-function formatDate(dateStr: string): string {
-  return formatDateUtil(dateStr, locale.value === 'zh-CN' ? 'zh-CN' : 'en-US');
-}
 
 function handleImageError(event: Event) {
   const target = event.target as HTMLImageElement;
@@ -190,7 +191,7 @@ onUnmounted(() => {
             :title="t('freshRSSSyncedFeed')"
             alt="FreshRSS"
           />
-          <span class="whitespace-nowrap">{{ formatDate(article.published_at) }}</span>
+          <span class="whitespace-nowrap">{{ formatDateWithI18n(article.published_at) }}</span>
         </div>
       </div>
     </div>

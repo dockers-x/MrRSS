@@ -152,7 +152,6 @@ function handleClose(): void {
     class="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
     data-modal-open="true"
     style="will-change: transform; transform: translateZ(0)"
-    @click.self="handleClose"
   >
     <div
       class="bg-bg-primary w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] flex flex-col rounded-none sm:rounded-2xl shadow-2xl border-0 sm:border border-border overflow-hidden animate-fade-in"

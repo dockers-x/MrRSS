@@ -15,10 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supported building and publishing multi-architecture Docker images to GHCR. (#349) (@czyt)
 - Supported email newsletter feeds via IMAP. (#313)
 - Supported more filter conditions including title regex, is FreshRSS feed, is image gallery, feed mode. (#372)
+- Supported displaying and sorting by last updated time, refresh status and update frequency in feed list. (#374)
+- Supported controlling play speed and sound volume for audio in article content rendering mode. (#354)
 
 ### Changed
 
 - Incresed default max concurrency and timeout settings for feed fetching based on network speed detection. (#375)
+- Disabled auto exit when clicking the background of popup windows to prevent accidental closures. (#355)
+- Optimized the display of publish time of articles in article list. (#373)
 
 ### Fixed
 
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed the limitation of HTTPS for feed URLs and API endpoints. (#251)
+- Articles will not be translated automatically while refreshing feeds.
 
 ## [1.3.12] - 2025-12-29
 

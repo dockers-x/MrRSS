@@ -311,7 +311,7 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "MrRSS",
 		Description: "A modern, privacy-focused RSS reader",
-		LogLevel:    slog.LevelDebug,
+		LogLevel:    slog.LevelError,
 		Assets: application.AssetOptions{
 			Handler:    combinedHandler,
 			Middleware: APIMiddleware(combinedHandler),

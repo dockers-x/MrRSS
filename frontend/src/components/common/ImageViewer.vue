@@ -167,10 +167,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-    @click="close"
-  >
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
     <!-- Controls -->
     <div class="absolute top-4 right-4 flex gap-2 z-10" @click.stop>
       <button

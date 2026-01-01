@@ -626,10 +626,12 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 	// Get retry timeout from settings
 	retryTimeoutSeconds := tm.getRetryTimeout()
 
-	// First attempt: 10 second timeout
-	ctx1, cancel1 := context.WithTimeout(ctx, 10*time.Second)
+	// First attempt: 60 second timeout (increased from 10s for large feeds)
+	// Many feeds have 100+ articles, and processing can take time
+	ctx1, cancel1 := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel1()
 
+	log.Printf("Starting first attempt to fetch feed: %s (timeout: 60s)", task.Feed.Title)
 	err = tm.fetcher.fetchFeedWithContext(ctx1, task.Feed)
 	if err == nil {
 		success = true

@@ -45,6 +45,10 @@ type Feed struct {
 	// FreshRSS integration
 	IsFreshRSSSource bool   `json:"is_freshrss_source"` // Whether this feed is from FreshRSS sync
 	FreshRSSStreamID string `json:"freshrss_stream_id"` // FreshRSS stream ID (e.g., "feed/http://...")
+	// Statistics
+	LatestArticleTime *time.Time `json:"latest_article_time,omitempty"` // Latest article publish time
+	ArticlesPerMonth  float64    `json:"articles_per_month,omitempty"`  // Average articles per month (last 90 days / 3)
+	LastUpdateStatus  string     `json:"last_update_status,omitempty"`  // Last update status ("success" or "failed")
 }
 
 type Article struct {

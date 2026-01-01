@@ -44,10 +44,16 @@ func NewFetcher(db *database.DB, translator translation.Translator) *Fetcher {
 		executor = NewScriptExecutor(scriptsDir)
 	}
 
-	// Create HTTP client for feed parsing
-	httpClient, err := CreateHTTPClient("")
+	// Create HTTP client for feed parsing with proper User-Agent
+	// This is critical because many RSS servers block requests without a proper User-Agent
+	httpClient, err := utils.CreateHTTPClientWithUserAgent(
+		"",
+		30*time.Second,
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+	)
 	if err != nil {
 		// Fallback to default client if proxy setup fails
+		log.Printf("Warning: Failed to create HTTP client with User-Agent: %v, using default client", err)
 		httpClient = &http.Client{Timeout: 30 * time.Second}
 	}
 
@@ -397,8 +403,6 @@ func (f *Fetcher) fetchFeedWithContext(ctx context.Context, feed models.Feed) er
 			}
 		}()
 	}
-
-	utils.DebugLog("Updated feed: %s", feed.Title)
 	return nil
 }
 

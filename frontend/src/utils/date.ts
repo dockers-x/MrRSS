@@ -3,15 +3,46 @@
  */
 
 /**
- * Format a date string for display in the current locale
+ * Format a date string as relative time (within 14 days) or absolute date
  * @param dateStr - ISO date string
  * @param locale - Locale code (e.g., 'en-US', 'zh-CN')
- * @returns Formatted date string
+ * @param t - Translation function from i18n
+ * @returns Formatted date string (relative time if within 14 days, absolute date otherwise)
  */
-export function formatDate(dateStr: string, locale: string = 'en-US'): string {
+export function formatDate(
+  dateStr: string,
+  locale: string = 'en-US',
+  t?: (key: string, params?: Record<string, unknown>) => string
+): string {
   if (!dateStr) return '';
+
   try {
     const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    // Use relative time for articles within 14 days
+    if (diffDays < 14) {
+      if (!t) {
+        // Fallback if no translation function provided
+        if (diffSeconds < 60) return `${diffSeconds}s ago`;
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return `${diffDays}d ago`;
+      }
+
+      // Use translations
+      if (diffSeconds < 60) return t('secondsAgo', { count: diffSeconds });
+      if (diffMins < 60) return t('minutesAgo', { count: diffMins });
+      if (diffHours < 24) return t('hoursAgo', { count: diffHours });
+      return t('daysAgo', { count: diffDays });
+    }
+
+    // Use absolute date for articles 14+ days old
     if (locale === 'zh-CN') {
       // Format as "2023年12月8日" for Chinese
       const year = date.getFullYear();
@@ -27,11 +58,11 @@ export function formatDate(dateStr: string, locale: string = 'en-US'): string {
 }
 
 /**
- * Format a timestamp as a relative time (e.g., "2 hours ago")
+ * Format a timestamp as an absolute date (year-month-day)
  * @param timestamp - ISO timestamp string
  * @param locale - Current locale for translations
  * @param t - Translation function from i18n
- * @returns Formatted relative time string
+ * @returns Formatted date string in locale-specific format
  */
 export function formatRelativeTime(
   timestamp: string,
@@ -41,19 +72,18 @@ export function formatRelativeTime(
   if (!timestamp) return t('never');
   try {
     const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return t('justNow');
-    if (diffMins < 60) return t('minutesAgo', { count: diffMins });
-    if (diffHours < 24) return t('hoursAgo', { count: diffHours });
-    if (diffDays < 7) return t('daysAgo', { count: diffDays });
-
-    // Get locale for date formatting
-    return date.toLocaleDateString(locale === 'zh-CN' ? 'zh-CN' : 'en-US');
+    // Format date based on locale
+    if (locale === 'zh-CN') {
+      // Chinese format: "2023年12月8日"
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}年${month}月${day}日`;
+    } else {
+      // English format: "12/8/2023" (using locale's default format)
+      return date.toLocaleDateString('en-US');
+    }
   } catch {
     return t('never');
   }

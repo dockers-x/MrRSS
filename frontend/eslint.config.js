@@ -44,6 +44,7 @@ export default [
         HTMLSelectElement: 'readonly',
         HTMLAudioElement: 'readonly',
         HTMLIFrameElement: 'readonly',
+        DOMRect: 'readonly',
         Node: 'readonly',
         Text: 'readonly',
         NodeFilter: 'readonly',

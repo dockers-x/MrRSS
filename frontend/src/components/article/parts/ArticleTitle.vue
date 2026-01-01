@@ -15,6 +15,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t } = useI18n();
+const { locale } = useI18n();
+
+// Translation function wrapper for formatDate
+const formatDateWithI18n = (dateStr: string): string => {
+  return formatDate(dateStr, locale.value, t);
+};
 
 // Computed: check if we should show bilingual title
 const showBilingualTitle = computed(() => {
@@ -52,7 +58,7 @@ const showBilingualTitle = computed(() => {
   >
     <span>{{ article.feed_title }}</span>
     <span class="hidden sm:inline">•</span>
-    <span>{{ formatDate(article.published_at, $i18n.locale.value) }}</span>
+    <span>{{ formatDateWithI18n(article.published_at) }}</span>
     <span v-if="translationEnabled" class="flex items-center gap-1 text-accent">
       <PhTranslate :size="14" />
       <span class="text-xs">{{ t('autoTranslateEnabled') }}</span>

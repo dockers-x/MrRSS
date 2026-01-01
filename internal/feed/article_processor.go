@@ -39,11 +39,6 @@ type ArticleWithContent struct {
 // processArticles processes RSS feed items and converts them to Article models
 // Returns a slice of ArticleWithContent which includes both the article and its content
 func (f *Fetcher) processArticles(feed models.Feed, items []*gofeed.Item) []*ArticleWithContent {
-	// Check translation settings
-	translationEnabledStr, _ := f.db.GetSetting("translation_enabled")
-	targetLang, _ := f.db.GetSetting("target_language")
-	translationEnabled := translationEnabledStr == "true"
-
 	var articlesWithContent []*ArticleWithContent
 
 	for _, item := range items {
@@ -80,13 +75,12 @@ func (f *Fetcher) processArticles(feed models.Feed, items []*gofeed.Item) []*Art
 			title = generateTitleFromContent(content)
 		}
 
-		translatedTitle := ""
-		if translationEnabled && f.translator != nil {
-			t, err := f.translator.Translate(title, targetLang)
-			if err == nil {
-				translatedTitle = t
-			}
-		}
+		// IMPORTANT: Translation should NOT be done here during feed refresh!
+		// Translation is an expensive operation that should only happen on-demand:
+		// 1. When article enters viewport (lazy loading)
+		// 2. When user manually clicks translate button
+		// Doing it here for all articles during refresh causes massive performance issues
+		translatedTitle := "" // Always empty - translation happens on-demand in frontend
 
 		article := &models.Article{
 			FeedID:                feed.ID,

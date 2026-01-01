@@ -2,10 +2,25 @@ package database
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"MrRSS/internal/models"
 )
+
+// parseDateTimeForSQL converts Go time format to SQLite-compatible format
+// Input: "2025-12-31 14:19:21 +0000 UTC" -> Output: "2025-12-31 14:19:21"
+func parseDateTimeForSQL(timeStr string) string {
+	if timeStr == "" {
+		return ""
+	}
+	// Split by space and take first two parts (date and time)
+	parts := strings.Split(timeStr, " ")
+	if len(parts) >= 2 {
+		return parts[0] + " " + parts[1]
+	}
+	return timeStr
+}
 
 // AddFeed adds a new feed or updates an existing one.
 // Returns the feed ID and any error encountered.
@@ -138,7 +153,48 @@ func (db *DB) DeleteFeed(id int64) error {
 // GetFeeds returns all feeds ordered by category and position.
 func (db *DB) GetFeeds() ([]models.Feed, error) {
 	db.WaitForReady()
-	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, COALESCE(position, 0), last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0), COALESCE(type, ''), COALESCE(xpath_item, ''), COALESCE(xpath_item_title, ''), COALESCE(xpath_item_content, ''), COALESCE(xpath_item_uri, ''), COALESCE(xpath_item_author, ''), COALESCE(xpath_item_timestamp, ''), COALESCE(xpath_item_time_format, ''), COALESCE(xpath_item_thumbnail, ''), COALESCE(xpath_item_categories, ''), COALESCE(xpath_item_uid, ''), COALESCE(article_view_mode, 'global'), COALESCE(auto_expand_content, 'global'), COALESCE(email_address, ''), COALESCE(email_imap_server, ''), COALESCE(email_imap_port, 993), COALESCE(email_username, ''), COALESCE(email_password, ''), COALESCE(email_folder, 'INBOX'), COALESCE(email_last_uid, 0), COALESCE(is_freshrss_source, 0), COALESCE(freshrss_stream_id, '') FROM feeds ORDER BY category ASC, position ASC, id ASC")
+	rows, err := db.Query(`
+		SELECT
+			f.id, f.title, f.url, f.link, f.description, f.category, f.image_url,
+			COALESCE(f.position, 0), f.last_updated, f.last_error,
+			COALESCE(f.discovery_completed, 0), COALESCE(f.script_path, ''),
+			COALESCE(f.hide_from_timeline, 0), COALESCE(f.proxy_url, ''),
+			COALESCE(f.proxy_enabled, 0), COALESCE(f.refresh_interval, 0),
+			COALESCE(f.is_image_mode, 0), COALESCE(f.type, ''),
+			COALESCE(f.xpath_item, ''), COALESCE(f.xpath_item_title, ''),
+			COALESCE(f.xpath_item_content, ''), COALESCE(f.xpath_item_uri, ''),
+			COALESCE(f.xpath_item_author, ''), COALESCE(f.xpath_item_timestamp, ''),
+			COALESCE(f.xpath_item_time_format, ''), COALESCE(f.xpath_item_thumbnail, ''),
+			COALESCE(f.xpath_item_categories, ''), COALESCE(f.xpath_item_uid, ''),
+			COALESCE(f.article_view_mode, 'global'),
+			COALESCE(f.auto_expand_content, 'global'),
+			COALESCE(f.email_address, ''), COALESCE(f.email_imap_server, ''),
+			COALESCE(f.email_imap_port, 993), COALESCE(f.email_username, ''),
+			COALESCE(f.email_password, ''), COALESCE(f.email_folder, 'INBOX'),
+			COALESCE(f.email_last_uid, 0), COALESCE(f.is_freshrss_source, 0),
+			COALESCE(f.freshrss_stream_id, ''),
+			(SELECT MAX(a.published_at) FROM articles a WHERE a.feed_id = f.id) as latest_article_time,
+			CAST(COALESCE((
+				SELECT
+					CASE
+						-- If we have articles spanning more than 365 days, use last 365 days
+						WHEN EXISTS (SELECT 1 FROM articles a2 WHERE a2.feed_id = f.id AND a2.published_at IS NOT NULL AND a2.published_at != '' AND CAST(julianday('now') - julianday(substr(a2.published_at, 1, 19)) AS REAL) > 365.0)
+						THEN (SELECT CAST(COUNT(*) * 30.0 / 365.0 AS REAL) FROM articles a3 WHERE a3.feed_id = f.id AND a3.published_at IS NOT NULL AND a3.published_at != '' AND julianday(substr(a3.published_at, 1, 19)) >= julianday(datetime('now', '-365 days')))
+						-- Otherwise, calculate based on the actual time span of all articles
+						ELSE (
+							SELECT CAST(COUNT(*) * 30.0 AS REAL) /
+								CASE
+									WHEN CAST(julianday(substr(MAX(a4.published_at), 1, 19)) - julianday(substr(MIN(a4.published_at), 1, 19)) AS REAL) < 1.0 THEN 1.0
+									ELSE CAST(julianday(substr(MAX(a4.published_at), 1, 19)) - julianday(substr(MIN(a4.published_at), 1, 19)) AS REAL)
+								END
+							FROM articles a4
+							WHERE a4.feed_id = f.id AND a4.published_at IS NOT NULL AND a4.published_at != ''
+						)
+					END
+			), 0) AS REAL) as articles_per_month
+		FROM feeds f
+		ORDER BY f.category ASC, f.position ASC, f.id ASC
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +203,25 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 	var feeds []models.Feed
 	for rows.Next() {
 		var f models.Feed
-		var link, category, imageURL, lastError, scriptPath, proxyURL, feedType, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid, articleViewMode, autoExpandContent, emailAddress, emailIMAPServer, emailUsername, emailPassword, emailFolder, freshRSSStreamID sql.NullString
+		var link, category, imageURL, lastError, scriptPath, proxyURL, feedType, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid, articleViewMode, autoExpandContent, emailAddress, emailIMAPServer, emailUsername, emailPassword, emailFolder, freshRSSStreamID, latestArticleTimeStr sql.NullString
 		var lastUpdated sql.NullTime
-		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.Position, &lastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent, &xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat, &xpathItemThumbnail, &xpathItemCategories, &xpathItemUid, &articleViewMode, &autoExpandContent, &emailAddress, &emailIMAPServer, &f.EmailIMAPPort, &emailUsername, &emailPassword, &emailFolder, &f.EmailLastUID, &f.IsFreshRSSSource, &freshRSSStreamID); err != nil {
+		if err := rows.Scan(
+			&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL,
+			&f.Position, &lastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath,
+			&f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval,
+			&f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent,
+			&xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat,
+			&xpathItemThumbnail, &xpathItemCategories, &xpathItemUid, &articleViewMode,
+			&autoExpandContent, &emailAddress, &emailIMAPServer, &f.EmailIMAPPort,
+			&emailUsername, &emailPassword, &emailFolder, &f.EmailLastUID,
+			&f.IsFreshRSSSource, &freshRSSStreamID, &latestArticleTimeStr, &f.ArticlesPerMonth,
+		); err != nil {
 			return nil, err
 		}
+
+		// Round articles_per_month to integer for display
+		f.ArticlesPerMonth = float64(int(f.ArticlesPerMonth + 0.5))
+
 		f.Link = link.String
 		f.Category = category.String
 		f.ImageURL = imageURL.String
@@ -194,6 +264,40 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 			f.EmailIMAPPort = 993
 		}
 		f.FreshRSSStreamID = freshRSSStreamID.String
+
+		// Set latest article time from string
+		// Format from database: "2025-11-15 18:39:02 +0000 UTC" (Go's time.String() format)
+		if latestArticleTimeStr.Valid && latestArticleTimeStr.String != "" {
+			timeStr := latestArticleTimeStr.String
+			var parsedTime time.Time
+			var err error
+
+			// Try the format stored in database (Go's time.String() format with UTC zone)
+			// Format: "2006-01-02 15:04:05 +0000 UTC"
+			if parsedTime, err = time.Parse("2006-01-02 15:04:05 -0700 MST", timeStr); err == nil {
+				f.LatestArticleTime = &parsedTime
+			} else if parsedTime, err = time.Parse(time.RFC3339, timeStr); err == nil {
+				// RFC3339 format
+				f.LatestArticleTime = &parsedTime
+			} else if parsedTime, err = time.Parse("2006-01-02T15:04:05Z", timeStr); err == nil {
+				// RFC3339 variant with explicit Z
+				f.LatestArticleTime = &parsedTime
+			} else if parsedTime, err = time.Parse("2006-01-02T15:04:05", timeStr); err == nil {
+				// Without timezone
+				f.LatestArticleTime = &parsedTime
+			} else if parsedTime, err = time.Parse("2006-01-02 15:04:05", timeStr); err == nil {
+				// SQLite default format
+				f.LatestArticleTime = &parsedTime
+			}
+		}
+
+		// Determine last update status based on last_error
+		if f.LastError != "" {
+			f.LastUpdateStatus = "failed"
+		} else {
+			f.LastUpdateStatus = "success"
+		}
+
 		feeds = append(feeds, f)
 	}
 	return feeds, nil

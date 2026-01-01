@@ -144,6 +144,22 @@ func (db *DB) Init() error {
 			WHERE unique_id IS NULL
 		`)
 
+		// Backfill published_at for articles that have NULL values
+		// Set to current time as fallback (article creation time is unknown)
+		result, err := db.Exec(`
+			UPDATE articles
+			SET published_at = datetime('now')
+			WHERE published_at IS NULL
+		`)
+		if err != nil {
+			log.Printf("Warning: Failed to backfill published_at: %v", err)
+		} else {
+			rowsAffected, _ := result.RowsAffected()
+			if rowsAffected > 0 {
+				log.Printf("Backfilled published_at for %d articles", rowsAffected)
+			}
+		}
+
 		// Migration: Drop the UNIQUE constraint on url column if it exists
 		// SQLite doesn't support DROP CONSTRAINT directly, so we need to recreate the table
 		// Check if we need to migrate by checking if url is still UNIQUE

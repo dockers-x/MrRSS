@@ -69,7 +69,6 @@ watch(
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4"
     data-modal-open="true"
     style="will-change: transform; transform: translateZ(0)"
-    @click.self="close"
   >
     <div
       class="bg-bg-primary w-full max-w-4xl h-full sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-2xl shadow-2xl border border-border flex flex-col"

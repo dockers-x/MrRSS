@@ -13,11 +13,14 @@ import {
   PhEyeSlash,
   PhFileCode,
   PhEnvelope,
+  PhCheckCircle,
+  PhXCircle,
 } from '@phosphor-icons/vue';
 import type { Feed } from '@/types/models';
+import { formatRelativeTime } from '@/utils/date';
 
 const store = useAppStore();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const emit = defineEmits<{
   'add-feed': [];
@@ -30,7 +33,13 @@ const emit = defineEmits<{
 const selectedFeeds: Ref<number[]> = ref([]);
 
 // Sorting state
-type SortField = 'name' | 'date' | 'category';
+type SortField =
+  | 'name'
+  | 'date'
+  | 'category'
+  | 'latest_article'
+  | 'articles_per_month'
+  | 'update_status';
 type SortDirection = 'asc' | 'desc';
 const sortField = ref<SortField>('name');
 const sortDirection = ref<SortDirection>('asc');
@@ -51,6 +60,21 @@ const sortedFeeds = computed(() => {
       const catA = a.category || '';
       const catB = b.category || '';
       comparison = catA.localeCompare(catB, undefined, { sensitivity: 'base' });
+    } else if (sortField.value === 'latest_article') {
+      // Sort by latest article time
+      const timeA = a.latest_article_time ? new Date(a.latest_article_time).getTime() : 0;
+      const timeB = b.latest_article_time ? new Date(b.latest_article_time).getTime() : 0;
+      comparison = timeA - timeB;
+    } else if (sortField.value === 'articles_per_month') {
+      // Sort by articles per month
+      const countA = a.articles_per_month || 0;
+      const countB = b.articles_per_month || 0;
+      comparison = countA - countB;
+    } else if (sortField.value === 'update_status') {
+      // Sort by update status (failed first, then success)
+      const statusA = a.last_update_status || 'success';
+      const statusB = b.last_update_status || 'success';
+      comparison = statusA.localeCompare(statusB);
     }
 
     return sortDirection.value === 'asc' ? comparison : -comparison;
@@ -195,7 +219,7 @@ async function openScriptsFolder() {
           />
           <span class="hidden sm:inline text-xs sm:text-sm">{{ t('selectAll') }}</span>
         </label>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 flex-wrap">
           <PhSortAscending :size="12" class="text-text-secondary" />
           <button
             :class="[
@@ -233,11 +257,56 @@ async function openScriptsFolder() {
             {{ t('sortByCategory') }}
             <span v-if="sortField === 'category'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
           </button>
+          <button
+            :class="[
+              'px-1.5 py-0.5 text-xs rounded transition-colors',
+              sortField === 'latest_article'
+                ? 'bg-accent text-white'
+                : 'bg-bg-secondary text-text-primary hover:bg-bg-primary',
+            ]"
+            :title="t('sortByLatestArticle')"
+            @click="toggleSort('latest_article')"
+          >
+            {{ t('latest') }}
+            <span v-if="sortField === 'latest_article'">{{
+              sortDirection === 'asc' ? '↑' : '↓'
+            }}</span>
+          </button>
+          <button
+            :class="[
+              'px-1.5 py-0.5 text-xs rounded transition-colors',
+              sortField === 'articles_per_month'
+                ? 'bg-accent text-white'
+                : 'bg-bg-secondary text-text-primary hover:bg-bg-primary',
+            ]"
+            :title="t('sortByArticlesPerMonth')"
+            @click="toggleSort('articles_per_month')"
+          >
+            {{ t('frequency') }}
+            <span v-if="sortField === 'articles_per_month'">{{
+              sortDirection === 'asc' ? '↑' : '↓'
+            }}</span>
+          </button>
+          <button
+            :class="[
+              'px-1.5 py-0.5 text-xs rounded transition-colors',
+              sortField === 'update_status'
+                ? 'bg-accent text-white'
+                : 'bg-bg-secondary text-text-primary hover:bg-bg-primary',
+            ]"
+            :title="t('sortByUpdateStatus')"
+            @click="toggleSort('update_status')"
+          >
+            {{ t('status') }}
+            <span v-if="sortField === 'update_status'">{{
+              sortDirection === 'asc' ? '↑' : '↓'
+            }}</span>
+          </button>
         </div>
       </div>
 
       <!-- Scrollable Content -->
-      <div class="overflow-y-auto max-h-48 sm:max-h-80">
+      <div class="overflow-y-auto max-h-64 sm:max-h-96 lg:max-h-[32rem]">
         <!-- Feed Rows -->
         <div
           v-for="feed in sortedFeeds"
@@ -268,8 +337,9 @@ async function openScriptsFolder() {
             />
           </div>
           <div class="truncate flex-1 min-w-0">
-            <div class="font-medium truncate text-xs sm:text-sm flex items-center gap-1">
-              {{ feed.title }}
+            <!-- Title Row with Statistics -->
+            <div class="font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
+              <span class="truncate">{{ feed.title }}</span>
               <!-- FreshRSS icon indicator -->
               <img
                 v-if="feed.is_freshrss_source"
@@ -284,6 +354,49 @@ async function openScriptsFolder() {
                 class="text-text-secondary shrink-0"
                 :title="t('hideFromTimeline')"
               />
+              <!-- Statistics (visible on larger screens) -->
+              <div
+                class="hidden sm:inline-flex items-center gap-1.5 ml-auto text-xs text-text-secondary shrink-0"
+              >
+                <!-- Latest Article Time -->
+                <span
+                  v-if="feed.latest_article_time"
+                  class="inline-flex items-center gap-1"
+                  :title="t('latest')"
+                >
+                  {{ formatRelativeTime(feed.latest_article_time, locale.value, t) }}
+                </span>
+                <span v-else class="text-text-tertiary" :title="t('latest')">-</span>
+
+                <!-- Articles Per Month -->
+                <span class="inline-flex items-center gap-1" :title="t('frequency')">
+                  <span class="text-text-tertiary">•</span>
+                  <span
+                    v-if="feed.articles_per_month !== null && feed.articles_per_month !== undefined"
+                  >
+                    {{ feed.articles_per_month }} {{ t('articlesPerMonth') }}
+                  </span>
+                  <span v-else class="text-text-tertiary">0 {{ t('articlesPerMonth') }}</span>
+                </span>
+
+                <!-- Update Status -->
+                <span class="inline-flex items-center gap-1" :title="t('status')">
+                  <span class="text-text-tertiary">•</span>
+                  <PhCheckCircle
+                    v-if="feed.last_update_status === 'success'"
+                    :size="12"
+                    class="text-green-500"
+                    :title="t('updateSuccess')"
+                  />
+                  <PhXCircle
+                    v-else-if="feed.last_update_status === 'failed'"
+                    :size="12"
+                    class="text-red-500"
+                    :title="feed.last_error || t('updateFailed')"
+                  />
+                  <span v-else class="text-text-tertiary">?</span>
+                </span>
+              </div>
             </div>
             <div class="text-xs text-text-secondary truncate hidden sm:block">
               <span v-if="feed.category" class="inline-flex items-center gap-1">

@@ -62,6 +62,10 @@ export interface Feed {
   // FreshRSS integration
   is_freshrss_source?: boolean; // Whether this feed is from FreshRSS sync
   freshrss_stream_id?: string; // FreshRSS stream ID (e.g., "feed/http://...")
+  // Statistics
+  latest_article_time?: string; // Latest article publish time
+  articles_per_month?: number; // Average articles per month (calculated from last 90 days)
+  last_update_status?: string; // Last update status ("success" or "failed")
 }
 
 export interface UnreadCounts {
