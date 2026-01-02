@@ -9,7 +9,7 @@ info:
   productName: "MrRSS" # The name of the application
   productIdentifier: "com.mrrss.app" # The unique product identifier
   description: "A modern, standalone RSS reader" # The application description
-  copyright: "Copyright © 2025" # Copyright text
+  copyright: "Copyright © 2026" # Copyright text
   comments: "Built with Wails" # Comments
   version: "1.3.12" # The application version
 

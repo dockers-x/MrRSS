@@ -40,6 +40,10 @@ tasks:
             ref: .DEV
       - task: common:generate:icons
     cmds:
+      - cmd: powershell Remove-item *.syso -ErrorAction SilentlyContinue
+        platforms: [windows]
+      - cmd: rm -f *.syso
+        platforms: [linux, darwin]
       - task: generate:syso
       - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}}.exe
       - cmd: powershell Remove-item *.syso
