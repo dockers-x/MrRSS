@@ -2338,6 +2338,15 @@
                             }
                         }
                     },
+                    "409": {
+                        "description": "Feed URL already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2531,6 +2540,15 @@
                     },
                     "400": {
                         "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Feed URL already exists",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

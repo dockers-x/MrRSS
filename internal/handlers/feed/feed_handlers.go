@@ -43,6 +43,7 @@ func HandleFeeds(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 // @Param        request  body      object  true  "Feed details"
 // @Success      200  {string}  string  "Feed added successfully"
 // @Failure      400  {object}  map[string]string  "Bad request"
+// @Failure      409  {object}  map[string]string  "Feed URL already exists"
 // @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /feeds/add [post]
 func HandleAddFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
@@ -83,8 +84,25 @@ func HandleAddFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Determine the feed URL to check for duplicates
+	feedURL := req.URL
+	if req.ScriptPath != "" {
+		feedURL = "script://" + req.ScriptPath
+	} else if req.Type == "email" {
+		feedURL = "email://" + req.EmailAddress
+	}
+
+	// Check if feed with this URL already exists (excluding FreshRSS feeds)
+	var existingID int64
+	var existingIsFreshRSS bool
+	err := h.DB.QueryRow("SELECT id, is_freshrss_source FROM feeds WHERE url = ?", feedURL).Scan(&existingID, &existingIsFreshRSS)
+	if err == nil && !existingIsFreshRSS {
+		// Feed exists and is not a FreshRSS feed - return conflict error
+		http.Error(w, "feed with this URL already exists", http.StatusConflict)
+		return
+	}
+
 	var feedID int64
-	var err error
 	if req.ScriptPath != "" {
 		// Add feed using custom script
 		feedID, err = h.Fetcher.AddScriptSubscription(req.ScriptPath, req.Category, req.Title)
@@ -159,78 +177,97 @@ func HandleDeleteFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 // @Param        request  body      object  true  "Feed update details"
 // @Success      200  {string}  string  "Feed updated successfully"
 // @Failure      400  {object}  map[string]string  "Bad request"
+// @Failure      409  {object}  map[string]string  "Feed URL already exists"
 // @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /feeds/update [post]
 func HandleUpdateFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		ID               int64  `json:"id"`
-		Title            string `json:"title"`
-		URL              string `json:"url"`
-		Category         string `json:"category"`
-		ScriptPath       string `json:"script_path"`
-		HideFromTimeline bool   `json:"hide_from_timeline"`
-		ProxyURL         string `json:"proxy_url"`
-		ProxyEnabled     bool   `json:"proxy_enabled"`
-		RefreshInterval  int    `json:"refresh_interval"`
-		IsImageMode      bool   `json:"is_image_mode"`
-		// XPath fields
-		Type                string `json:"type"`
-		XPathItem           string `json:"xpath_item"`
-		XPathItemTitle      string `json:"xpath_item_title"`
-		XPathItemContent    string `json:"xpath_item_content"`
-		XPathItemUri        string `json:"xpath_item_uri"`
-		XPathItemAuthor     string `json:"xpath_item_author"`
-		XPathItemTimestamp  string `json:"xpath_item_timestamp"`
-		XPathItemTimeFormat string `json:"xpath_item_time_format"`
-		XPathItemThumbnail  string `json:"xpath_item_thumbnail"`
-		XPathItemCategories string `json:"xpath_item_categories"`
-		XPathItemUid        string `json:"xpath_item_uid"`
-		ArticleViewMode     string `json:"article_view_mode"`
-		AutoExpandContent   string `json:"auto_expand_content"`
-		// Email/Newsletter fields
-		EmailAddress    string `json:"email_address"`
-		EmailIMAPServer string `json:"email_imap_server"`
-		EmailIMAPPort   int    `json:"email_imap_port"`
-		EmailUsername   string `json:"email_username"`
-		EmailPassword   string `json:"email_password"`
-		EmailFolder     string `json:"email_folder"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+    var req struct {
+        ID               int64  `json:"id"`
+        Title            string `json:"title"`
+        URL              string `json:"url"`
+        Category         string `json:"category"`
+        ScriptPath       string `json:"script_path"`
+        HideFromTimeline bool   `json:"hide_from_timeline"`
+        ProxyURL         string `json:"proxy_url"`
+        ProxyEnabled     bool   `json:"proxy_enabled"`
+        RefreshInterval  int    `json:"refresh_interval"`
+        IsImageMode      bool   `json:"is_image_mode"`
+        // XPath fields
+        Type                string `json:"type"`
+        XPathItem           string `json:"xpath_item"`
+        XPathItemTitle      string `json:"xpath_item_title"`
+        XPathItemContent    string `json:"xpath_item_content"`
+        XPathItemUri        string `json:"xpath_item_uri"`
+        XPathItemAuthor     string `json:"xpath_item_author"`
+        XPathItemTimestamp  string `json:"xpath_item_timestamp"`
+        XPathItemTimeFormat string `json:"xpath_item_time_format"`
+        XPathItemThumbnail  string `json:"xpath_item_thumbnail"`
+        XPathItemCategories string `json:"xpath_item_categories"`
+        XPathItemUid        string `json:"xpath_item_uid"`
+        ArticleViewMode     string `json:"article_view_mode"`
+        AutoExpandContent   string `json:"auto_expand_content"`
+        // Email/Newsletter fields
+        EmailAddress    string `json:"email_address"`
+        EmailIMAPServer string `json:"email_imap_server"`
+        EmailIMAPPort   int    `json:"email_imap_port"`
+        EmailUsername   string `json:"email_username"`
+        EmailPassword   string `json:"email_password"`
+        EmailFolder     string `json:"email_folder"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	// Validate RSSHub URL if provided
-	if req.URL != "" && rsshub.IsRSSHubURL(req.URL) {
-		// Check if RSSHub is enabled
-		enabledStr, _ := h.DB.GetSetting("rsshub_enabled")
-		if enabledStr != "true" {
-			http.Error(w, "RSSHub integration is disabled. Please enable it in settings", http.StatusBadRequest)
-			return
-		}
+    // Validate RSSHub URL if provided
+    if req.URL != "" && rsshub.IsRSSHubURL(req.URL) {
+        // Check if RSSHub is enabled
+        enabledStr, _ := h.DB.GetSetting("rsshub_enabled")
+        if enabledStr != "true" {
+            http.Error(w, "RSSHub integration is disabled. Please enable it in settings", http.StatusBadRequest)
+            return
+        }
 
-		endpoint, _ := h.DB.GetSetting("rsshub_endpoint")
-		if endpoint == "" {
-			endpoint = "https://rsshub.app"
-		}
-		apiKey, _ := h.DB.GetEncryptedSetting("rsshub_api_key")
+        endpoint, _ := h.DB.GetSetting("rsshub_endpoint")
+        if endpoint == "" {
+            endpoint = "https://rsshub.app"
+        }
+        apiKey, _ := h.DB.GetEncryptedSetting("rsshub_api_key")
 
-		// Skip validation if API key is empty (public rsshub.app instance with Cloudflare protection)
-		if apiKey != "" {
-			route := rsshub.ExtractRoute(req.URL)
-			client := rsshub.NewClient(endpoint, apiKey)
-			if err := client.ValidateRoute(route); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		}
-	}
+        // Skip validation if API key is empty (public rsshub.app instance with Cloudflare protection)
+        if apiKey != "" {
+            route := rsshub.ExtractRoute(req.URL)
+            client := rsshub.NewClient(endpoint, apiKey)
+            if err := client.ValidateRoute(route); err != nil {
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+            }
+        }
+    }
 
-	if err := h.DB.UpdateFeed(req.ID, req.Title, req.URL, req.Category, req.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval, req.IsImageMode, req.Type, req.XPathItem, req.XPathItemTitle, req.XPathItemContent, req.XPathItemUri, req.XPathItemAuthor, req.XPathItemTimestamp, req.XPathItemTimeFormat, req.XPathItemThumbnail, req.XPathItemCategories, req.XPathItemUid, req.ArticleViewMode, req.AutoExpandContent, req.EmailAddress, req.EmailIMAPServer, req.EmailUsername, req.EmailPassword, req.EmailFolder, req.EmailIMAPPort); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+    // Determine the feed URL to check for duplicates
+    feedURL := req.URL
+    if req.ScriptPath != "" {
+        feedURL = "script://" + req.ScriptPath
+    } else if req.Type == "email" {
+        feedURL = "email://" + req.EmailAddress
+    }
+
+    // Check if another feed with this URL already exists (excluding FreshRSS feeds and current feed)
+    var existingID int64
+    var existingIsFreshRSS bool
+    err := h.DB.QueryRow("SELECT id, is_freshrss_source FROM feeds WHERE url = ? AND id != ?", feedURL, req.ID).Scan(&existingID, &existingIsFreshRSS)
+    if err == nil && !existingIsFreshRSS {
+        // Another feed exists with this URL and is not a FreshRSS feed - return conflict error
+        http.Error(w, "feed with this URL already exists", http.StatusConflict)
+        return
+    }
+
+    if err := h.DB.UpdateFeed(req.ID, req.Title, req.URL, req.Category, req.ScriptPath, req.HideFromTimeline, req.ProxyURL, req.ProxyEnabled, req.RefreshInterval, req.IsImageMode, req.Type, req.XPathItem, req.XPathItemTitle, req.XPathItemContent, req.XPathItemUri, req.XPathItemAuthor, req.XPathItemTimestamp, req.XPathItemTimeFormat, req.XPathItemThumbnail, req.XPathItemCategories, req.XPathItemUid, req.ArticleViewMode, req.AutoExpandContent, req.EmailAddress, req.EmailIMAPServer, req.EmailUsername, req.EmailPassword, req.EmailFolder, req.EmailIMAPPort); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    w.WriteHeader(http.StatusOK)
 }
 
 // HandleRefreshFeed refreshes a single feed by ID with progress tracking.

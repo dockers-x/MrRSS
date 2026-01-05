@@ -42,7 +42,7 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 	}
 
 	// Use the cached content fetching method
-	content, err := h.GetArticleContent(articleID)
+	content, wasCached, err := h.GetArticleContent(articleID)
 	if err != nil {
 		log.Printf("Error getting article content: %v", err)
 		http.Error(w, "Failed to fetch article content", http.StatusInternalServerError)
@@ -56,9 +56,10 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 		feedURL = feed.URL
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"content":  content,
 		"feed_url": feedURL,
+		"cached":   wasCached,
 	})
 }
 

@@ -211,6 +211,8 @@ export interface TranslationMessages {
   errorCheckingUpdates: string;
   errorCleaningDatabase: string;
   errorDiscoveringFeeds: string;
+  duplicateFeedURL: string;
+  duplicateFeedURLDesc: string;
   errorPollingStatus: string;
   errorReorderingFeed: string;
   errorSavingSettings: string;

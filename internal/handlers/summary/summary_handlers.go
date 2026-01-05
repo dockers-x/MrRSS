@@ -183,7 +183,8 @@ func getArticleContent(h *core.Handler, articleID int64, providedContent string)
 	}
 
 	// Otherwise, fetch from database/cache
-	return h.GetArticleContent(articleID)
+	content, _, err := h.GetArticleContent(articleID)
+	return content, err
 }
 
 // HandleClearSummaries clears all cached summaries from the database.

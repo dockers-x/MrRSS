@@ -81,7 +81,7 @@ func HandleExportToObsidian(h *core.Handler, w http.ResponseWriter, r *http.Requ
 	}
 
 	// Get article content
-	content, err := h.GetArticleContent(int64(req.ArticleID))
+	content, _, err := h.GetArticleContent(int64(req.ArticleID))
 	if err != nil {
 		// If content fetch fails, continue with empty content
 		content = ""
