@@ -28,6 +28,52 @@ export function useArticleDetail() {
     store.articles.find((a) => a.id === store.currentArticleId)
   );
 
+  // Get current article index in the filtered list
+  const currentArticleIndex = computed(() => {
+    if (!store.currentArticleId) return -1;
+    return store.articles.findIndex((a) => a.id === store.currentArticleId);
+  });
+
+  // Check if there's a previous article
+  const hasPreviousArticle = computed(() => currentArticleIndex.value > 0);
+
+  // Check if there's a next article
+  const hasNextArticle = computed(
+    () => currentArticleIndex.value >= 0 && currentArticleIndex.value < store.articles.length - 1
+  );
+
+  // Navigate to previous article
+  function goToPreviousArticle() {
+    if (hasPreviousArticle.value) {
+      const prevArticle = store.articles[currentArticleIndex.value - 1];
+      store.currentArticleId = prevArticle.id;
+      markAsReadIfNeeded(prevArticle);
+    }
+  }
+
+  // Navigate to next article
+  function goToNextArticle() {
+    if (hasNextArticle.value) {
+      const nextArticle = store.articles[currentArticleIndex.value + 1];
+      store.currentArticleId = nextArticle.id;
+      markAsReadIfNeeded(nextArticle);
+    }
+  }
+
+  // Mark article as read if it's not already read
+  function markAsReadIfNeeded(article: Article) {
+    if (!article.is_read) {
+      article.is_read = true;
+      fetch(`/api/articles/mark-read-sync?id=${article.id}&read=true`, {
+        method: 'POST',
+      });
+    }
+  }
+
+  // Expose articles list and index for UI display
+  const articles = computed(() => store.articles);
+  const currentArticleIndexForDisplay = computed(() => currentArticleIndex.value + 1);
+
   // Get effective view mode based on feed settings and global settings
   function getEffectiveViewMode(): ViewMode {
     if (!article.value) return defaultViewMode.value;
@@ -609,6 +655,10 @@ export function useArticleDetail() {
     imageViewerSrc,
     imageViewerAlt,
     locale,
+    hasPreviousArticle,
+    hasNextArticle,
+    articles,
+    currentArticleIndex: currentArticleIndexForDisplay,
 
     // Functions
     close,
@@ -622,6 +672,8 @@ export function useArticleDetail() {
     exportToObsidian,
     attachImageEventListeners, // Expose for re-attaching after content modifications
     handleRetryLoadContent,
+    goToPreviousArticle,
+    goToNextArticle,
 
     // Translations
     t,

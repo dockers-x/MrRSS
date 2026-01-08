@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supported manually sorting rules for advanced users. (#398)
 - Supported Gemini service API. (#437)
 - Supported language detection to reduce unnecessary translation requests. (#410)
+- Added error messages for feeds that fail to refresh. (#429)
+- Supported buttons to switch to previous/next articles in article detail view. (#357)
+- Supported -10s and +10s skip buttons in audio player. (#395)
 
 ### Changed
 

@@ -160,7 +160,7 @@ func main() {
 	log.Println("Database initialized successfully")
 
 	translator := translation.NewDynamicTranslatorWithCache(db, db)
-	fetcher := feed.NewFetcher(db, translator)
+	fetcher := feed.NewFetcher(db)
 	h := handlers.NewHandler(db, fetcher, translator)
 
 	// API Routes

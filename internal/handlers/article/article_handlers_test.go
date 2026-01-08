@@ -26,7 +26,7 @@ func setupHandler(t *testing.T) *core.Handler {
 	if err := db.Init(); err != nil {
 		t.Fatalf("db Init error: %v", err)
 	}
-	f := ff.NewFetcher(db, nil)
+	f := ff.NewFetcher(db)
 	return core.NewHandler(db, f, nil)
 }
 

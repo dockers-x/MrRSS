@@ -7,6 +7,8 @@ import {
   PhPause,
   PhGauge,
   PhSpinner,
+  PhRewind,
+  PhFastForward,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 
@@ -288,6 +290,18 @@ function onVolumeChange(event: Event) {
   }
 }
 
+// Skip backward 10 seconds
+function skipBackward() {
+  if (!audioRef.value) return;
+  audioRef.value.currentTime = Math.max(0, audioRef.value.currentTime - 10);
+}
+
+// Skip forward 10 seconds
+function skipForward() {
+  if (!audioRef.value) return;
+  audioRef.value.currentTime = Math.min(duration.value, audioRef.value.currentTime + 10);
+}
+
 // Extract filename from audio URL
 const downloadFilename = computed(() => {
   try {
@@ -335,6 +349,15 @@ const downloadFilename = computed(() => {
     <div class="space-y-3">
       <!-- Progress bar row -->
       <div class="flex items-center gap-3">
+        <!-- Skip backward button -->
+        <button
+          class="flex items-center justify-center w-8 h-8 rounded-full bg-bg-tertiary hover:bg-bg-hover transition-colors flex-shrink-0"
+          :title="t('skipBackward')"
+          @click="skipBackward"
+        >
+          <PhRewind :size="16" class="text-text-primary" />
+        </button>
+
         <!-- Play/Pause button -->
         <button
           class="flex items-center justify-center w-10 h-10 rounded-full bg-accent hover:bg-accent/90 transition-colors flex-shrink-0 relative"
@@ -344,6 +367,15 @@ const downloadFilename = computed(() => {
           <PhSpinner v-if="isLoading" :size="20" class="text-white animate-spin" />
           <PhPlay v-else-if="!isPlaying" :size="20" class="text-white ml-0.5" />
           <PhPause v-else :size="20" class="text-white" />
+        </button>
+
+        <!-- Skip forward button -->
+        <button
+          class="flex items-center justify-center w-8 h-8 rounded-full bg-bg-tertiary hover:bg-bg-hover transition-colors flex-shrink-0"
+          :title="t('skipForward')"
+          @click="skipForward"
+        >
+          <PhFastForward :size="16" class="text-text-primary" />
         </button>
 
         <!-- Progress bar -->

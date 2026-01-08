@@ -442,9 +442,9 @@ func proxyMediaDirectly(mediaURL, referer string, w http.ResponseWriter) error {
 	}
 
 	// Add additional headers
+	// Note: Don't set Accept-Encoding - let Go's http.Transport handle it automatically
 	req.Header.Set("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
 
 	resp, err := client.Do(req)
 	if err != nil {

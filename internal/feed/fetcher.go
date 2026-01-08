@@ -5,7 +5,6 @@ import (
 	"MrRSS/internal/models"
 	"MrRSS/internal/rsshub"
 	"MrRSS/internal/rules"
-	"MrRSS/internal/translation"
 	"MrRSS/internal/utils"
 	"context"
 	"fmt"
@@ -28,7 +27,6 @@ type Fetcher struct {
 	db                *database.DB
 	fp                FeedParser
 	highPriorityFp    FeedParser // High priority parser for content fetching
-	translator        translation.Translator
 	scriptExecutor    *ScriptExecutor
 	emailFetcher      *EmailFetcher
 	progress          Progress
@@ -38,7 +36,7 @@ type Fetcher struct {
 	cleanupManager    *CleanupManager
 }
 
-func NewFetcher(db *database.DB, translator translation.Translator) *Fetcher {
+func NewFetcher(db *database.DB) *Fetcher {
 	// Initialize script executor with scripts directory
 	scriptsDir, err := utils.GetScriptsDir()
 	var executor *ScriptExecutor
@@ -71,7 +69,6 @@ func NewFetcher(db *database.DB, translator translation.Translator) *Fetcher {
 		db:                db,
 		fp:                parser,
 		highPriorityFp:    highPriorityParser,
-		translator:        translator,
 		scriptExecutor:    executor,
 		emailFetcher:      NewEmailFetcher(db),
 		refreshCalculator: NewIntelligentRefreshCalculator(db),
@@ -191,49 +188,6 @@ func (f *Fetcher) getHTTPClient(feed models.Feed) (*http.Client, error) {
 		30*time.Second,
 		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 	)
-}
-
-// setupTranslator configures the translator based on database settings.
-// Now supports global proxy settings for all translation services.
-func (f *Fetcher) setupTranslator() {
-	provider, _ := f.db.GetSetting("translation_provider")
-
-	var t translation.Translator
-	switch provider {
-	case "deepl":
-		apiKey, _ := f.db.GetEncryptedSetting("deepl_api_key")
-		if apiKey != "" {
-			t = translation.NewDeepLTranslatorWithDB(apiKey, f.db)
-		} else {
-			t = translation.NewGoogleFreeTranslatorWithDB(f.db)
-		}
-	case "baidu":
-		appID, _ := f.db.GetSetting("baidu_app_id")
-		secretKey, _ := f.db.GetEncryptedSetting("baidu_secret_key")
-		if appID != "" && secretKey != "" {
-			t = translation.NewBaiduTranslatorWithDB(appID, secretKey, f.db)
-		} else {
-			t = translation.NewGoogleFreeTranslatorWithDB(f.db)
-		}
-	case "ai":
-		apiKey, _ := f.db.GetEncryptedSetting("ai_api_key")
-		endpoint, _ := f.db.GetSetting("ai_endpoint")
-		model, _ := f.db.GetSetting("ai_model")
-		if apiKey != "" {
-			t = translation.NewAITranslatorWithDB(apiKey, endpoint, model, f.db)
-			// Set custom headers if available
-			if aiTranslator, ok := t.(*translation.AITranslator); ok {
-				customHeaders, _ := f.db.GetSetting("ai_custom_headers")
-				aiTranslator.SetCustomHeaders(customHeaders)
-			}
-		} else {
-			t = translation.NewGoogleFreeTranslatorWithDB(f.db)
-		}
-	default:
-		// Default to Google Free Translator with proxy support
-		t = translation.NewGoogleFreeTranslatorWithDB(f.db)
-	}
-	f.translator = t
 }
 
 func (f *Fetcher) FetchAll(ctx context.Context) {

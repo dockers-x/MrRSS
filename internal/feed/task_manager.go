@@ -467,9 +467,6 @@ func (tm *TaskManager) ExecuteImmediately(ctx context.Context, feed models.Feed)
 			tm.checkCompletion()
 		}()
 
-		// Setup translator
-		tm.fetcher.setupTranslator()
-
 		// Execute with timeout and retry
 		var err error
 		var success bool
@@ -615,9 +612,6 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 	}()
 
 	log.Printf("Processing feed: %s (reason: %d)", task.Feed.Title, task.Reason)
-
-	// Setup translator
-	tm.fetcher.setupTranslator()
 
 	// Try fetching with timeout and retry
 	var err error

@@ -88,8 +88,9 @@ func (t *UserAgentTransport) RoundTrip(req *http.Request) (*http.Response, error
 	// Force set Accept-Language header to mimic browser
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7")
 
-	// Force set Accept-Encoding to match browser
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	// Don't manually set Accept-Encoding - let Go's http.Transport handle it automatically
+	// This ensures proper gzip decompression is applied
+	// Removing: req.Header.Set("Accept-Encoding", "gzip, deflate, br")
 
 	// Force set DNT header
 	req.Header.Set("DNT", "1")
