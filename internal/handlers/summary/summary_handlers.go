@@ -124,6 +124,7 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 			model, _ := h.DB.GetSetting("ai_model")
 			systemPrompt, _ := h.DB.GetSetting("ai_summary_prompt")
 			customHeaders, _ := h.DB.GetSetting("ai_custom_headers")
+			language, _ := h.DB.GetSetting("language")
 
 			aiSummarizer := summary.NewAISummarizerWithDB(apiKey, endpoint, model, h.DB)
 			if systemPrompt != "" {
@@ -131,6 +132,9 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 			}
 			if customHeaders != "" {
 				aiSummarizer.SetCustomHeaders(customHeaders)
+			}
+			if language != "" {
+				aiSummarizer.SetLanguage(language)
 			}
 			aiResult, err := aiSummarizer.Summarize(content, summaryLength)
 			if err != nil {

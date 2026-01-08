@@ -70,6 +70,7 @@ const en: TranslationMessages = {
   aiIsDanger:
     'Using AI services may incur costs, and some features may consume a significant number of tokens. Please ensure you understand the associated cost structure and monitor the usage accordingly.',
   aiLimitReached: 'AI usage limit reached. Using free alternatives.',
+  aiSummaryFallback: 'AI summarization failed. Using built-in algorithm.',
   aiModel: 'Model Name',
   aiModelDesc: 'AI model to use for translation and summarization',
   aiModelPlaceholder: 'gpt-4o-mini',

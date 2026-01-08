@@ -67,6 +67,7 @@ const zh: TranslationMessages = {
   aiIsDanger:
     '使用 AI 服务可能会产生费用，部分功能可能消耗 Token 较多，请确保您了解相关费用结构并实时监控使用情况。',
   aiLimitReached: 'AI 使用量已达上限，正在使用免费替代方案。',
+  aiSummaryFallback: 'AI 摘要生成失败，正在使用内置算法。',
   aiModel: '模型名称',
   aiModelDesc: '用于翻译和摘要的 AI 模型',
   aiModelPlaceholder: 'gpt-4o-mini',

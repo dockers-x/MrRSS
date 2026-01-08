@@ -20,6 +20,7 @@ type AISummarizer struct {
 	Model         string
 	SystemPrompt  string
 	CustomHeaders string
+	Language      string // User's language setting (e.g., "en", "zh")
 	client        *http.Client
 	db            DBInterface
 }
@@ -68,8 +69,9 @@ func NewAISummarizer(apiKey, endpoint, model string) *AISummarizer {
 		APIKey:        apiKey,
 		Endpoint:      strings.TrimSuffix(endpoint, "/"),
 		Model:         model,
-		SystemPrompt:  "", // Will be set from settings when used
-		CustomHeaders: "", // Will be set from settings when used
+		SystemPrompt:  "",   // Will be set from settings when used
+		CustomHeaders: "",   // Will be set from settings when used
+		Language:      "en", // Default to English
 		client:        &http.Client{Timeout: 30 * time.Second},
 		db:            nil,
 	}
@@ -94,7 +96,8 @@ func NewAISummarizerWithDB(apiKey, endpoint, model string, db DBInterface) *AISu
 		Endpoint:      strings.TrimSuffix(endpoint, "/"),
 		Model:         model,
 		SystemPrompt:  "",
-		CustomHeaders: "", // Will be set from settings when used
+		CustomHeaders: "",   // Will be set from settings when used
+		Language:      "en", // Default to English
 		client:        client,
 		db:            db,
 	}
@@ -108,6 +111,31 @@ func (s *AISummarizer) SetSystemPrompt(prompt string) {
 // SetCustomHeaders sets custom headers for AI requests.
 func (s *AISummarizer) SetCustomHeaders(headers string) {
 	s.CustomHeaders = headers
+}
+
+// SetLanguage sets the language for the summarizer.
+func (s *AISummarizer) SetLanguage(language string) {
+	s.Language = language
+}
+
+// getDefaultSystemPrompt returns the default system prompt based on the configured language.
+func (s *AISummarizer) getDefaultSystemPrompt() string {
+	switch s.Language {
+	case "zh":
+		return "你是一个专业的文章摘要助手。请为给定的文章生成清晰、格式良好的摘要。在列出项目、特性或要点时，请优先使用项目符号或编号列表来组织内容。使摘要易于阅读和浏览。"
+	default:
+		return "You are a helpful AI assistant that creates clear, well-formatted summaries. When listing items, features, or points, prefer using bullet points or numbered lists to organize the content. Make the summary scannable and easy to read."
+	}
+}
+
+// getUserPrompt generates a localized user prompt with target language specification.
+func (s *AISummarizer) getUserPrompt(targetWords int, text string) string {
+	switch s.Language {
+	case "zh":
+		return fmt.Sprintf("请用中文将以下内容总结为大约 %d 字：\n\n%s", targetWords, text)
+	default:
+		return fmt.Sprintf("Summarize the following text in English in approximately %d words:\n\n%s", targetWords, text)
+	}
 }
 
 // parseCustomHeaders parses the JSON string of custom headers into a map.
@@ -138,21 +166,16 @@ func (s *AISummarizer) Summarize(text string, length SummaryLength) (SummaryResu
 		}, nil
 	}
 
-	// Truncate text if too long to save tokens
-	// Use rune slicing to avoid breaking multi-byte UTF-8 characters (e.g., Chinese, emoji)
-	runes := []rune(cleanedText)
-	if len(runes) > MaxInputCharsForAI {
-		cleanedText = string(runes[:MaxInputCharsForAI])
-	}
-
 	targetWords := getTargetWordCount(length)
 
 	// Use custom system prompt if provided, otherwise use default
 	systemPrompt := s.SystemPrompt
 	if systemPrompt == "" {
-		systemPrompt = "You are a helpful AI assistant that creates clear, well-formatted summaries. When listing items, features, or points, prefer using bullet points or numbered lists to organize the content. Make the summary scannable and easy to read."
+		systemPrompt = s.getDefaultSystemPrompt()
 	}
-	userPrompt := fmt.Sprintf("Summarize the following text in approximately %d words:\n\n%s", targetWords, cleanedText)
+
+	// Generate localized user prompt with target language specification
+	userPrompt := s.getUserPrompt(targetWords, cleanedText)
 
 	// Try OpenAI format first
 	result, thinking, err := s.tryOpenAIFormat(systemPrompt, userPrompt)
