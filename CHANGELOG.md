@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the issue where links can not be opened in default browser after extracting full article content. (#409)
 - Fixed the issue where can adding duplicate feeds. (#401)
 - Fixed the issue where article list stucked in some cases. (#422)
+- Fixed the issue where sidebar width would shrink when feed titles are short. (#433)
 
 **Special Thanks** to @EnterMan123 for carefully testing and reporting many of these issues!
 
