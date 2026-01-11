@@ -175,7 +175,7 @@ onUnmounted(() => {
       >
         <PhMagnifyingGlassMinus :size="20" />
       </button>
-      <span class="control-btn pointer-events-none">{{ Math.round(scale * 100) }}%</span>
+      <span class="control-btn pointer-events-none w-[60px]">{{ Math.round(scale * 100) }}%</span>
       <button
         class="control-btn"
         :disabled="scale >= MAX_SCALE"
@@ -212,11 +212,6 @@ onUnmounted(() => {
         :class="[isDragging ? '' : 'transition-transform duration-150']"
         @dragstart.prevent
       />
-    </div>
-
-    <!-- Help text -->
-    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm text-center px-4">
-      <p class="hidden sm:block">{{ t('imageViewerHelpExtended') }}</p>
     </div>
   </div>
 </template>
