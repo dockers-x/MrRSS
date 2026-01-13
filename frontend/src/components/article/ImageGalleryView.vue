@@ -540,8 +540,9 @@ onUnmounted(() => {
       <!-- Image counter (when multiple images) -->
       <div
         v-if="allImages.length > 1"
-        class="absolute top-4 left-4 px-2 py-1 rounded text-white text-sm font-medium min-w-[60px] text-center z-10"
+        class="absolute top-4 left-4 px-2 py-1 rounded text-white text-sm font-medium min-w-[60px] text-center"
         style="
+          z-index: 11;
           text-shadow:
             0 1px 3px rgba(0, 0, 0, 0.8),
             0 1px 2px rgba(0, 0, 0, 0.6);
