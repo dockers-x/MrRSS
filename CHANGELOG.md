@@ -5,41 +5,41 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.16] - 2026-01-16
+## [1.3.16] - 2026-01-15
 
 ### Added
 
-- Supported compact mode for article list to reduce visual clutter. (#403)
-- Enhanced image gallery with support for multi-image articles and better navigation. (#457)
-- Supported Anthoropic and DeepSeek AI services.
-- Supported hiding text overlay in image gallery view. (#486)
-- Supported displaying if a feed is image gallery mode in the feed list. (#485)
-- Supported customizing translation service endpoint. (#383)
-- Supported not refreshing feeds automatically. (#448)
-- Supported displaying translation text only without original text. (#464)
+- Added compact mode for article list to reduce visual clutter. (#403)
+- Enhanced image gallery with multi‑image support and improved navigation. (#457)
+- Added support for Anthropic and DeepSeek AI services.
+- Added option to hide text overlay in image gallery view. (#486)
+- Added indication for feeds using image gallery mode in feed list. (#485)
+- Added ability to customize translation service endpoint. (#383)
+- Added option to disable automatic feed refresh. (#448)
+- Added option to display translated text only (hide original). (#464)
 
 ### Changed
 
-- All the documents will now be opened in the default browser, and multi-language support has been added. (#458)
-- Importing and exporting files will not show error messages if no file is selected. (#483)
-- If the target language in an article is more than 60%, the translation will be skipped to save API usage.
+- Documents now open in the default browser with added multi‑language support. (#458)
+- Import/export no longer shows error messages when no file is selected. (#483)
+- Articles with >60% target language content are no longer translated to reduce API usage.
 
 ### Fixed
 
-- Fixed an issue where left arrow and right arrow keyboard shortcuts will conflict with input fields. (#454)
-- Fixed an issue where article list will not scroll automatically when switching articles. (#451)
-- Fixed some minor style issues. (#452, #456, #453, #484)
-- Fixed an issue where the future publish time of some articles can not be displayed correctly.
-- Fixed an issue where the summary can not be generated according to the language setting. (#480)
-- Fixed an issue where the Gemini API can not work correctly. (#459)
-- Fixed an issue where the application will update automatically without user confirmation. (#479)
-- Fixed an issue where FreshRSS synchronization fails in some cases. (#460)
-- Fixed an issue where the switching between articles and images will cause view mode to reset. (#432)
-- Fixed an issue where the XPath mode feed parsing fails in some cases. (#479)
+- Fixed conflict between left/right arrow shortcuts and input fields. (#454)
+- Fixed article list not scrolling automatically when switching articles. (#451)
+- Fixed minor styling issues. (#452, #456, #453, #484)
+- Fixed display of future publish times for some articles.
+- Fixed summary generation not respecting language settings. (#480)
+- Fixed Gemini API integration. (#459)
+- Fixed automatic application updates occurring without user confirmation. (#479)
+- Fixed intermittent FreshRSS synchronization failures. (#460)
+- Fixed view mode reset when switching between articles and images. (#432)
+- Fixed XPath feed parsing in certain cases. (#479)
 
 ### Refactored
 
-- Refactored sidebar, settings and summary component for better maintainability and performance. (#461, #466)
+- Refactored sidebar, settings, and summary components for improved maintainability and performance. (#461, #466)
 
 ## [1.3.15] - 2026-01-11
 
